@@ -1,0 +1,439 @@
+/* Basic Reset & Body Styling */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 800px; /* Max width of the chat window */
+    height: 90vh;   /* Max height of the chat window */
+    max-height: 700px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Important for keeping elements contained */
+}
+
+/* Chat Header */
+.chat-header {
+    padding: 15px 20px;
+    background-color: #007bff; /* Example header color */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.chat-header h1 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.config-panel-button {
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.config-panel-button:hover {
+    background-color: #004085;
+}
+
+/* Main Chat Area */
+.chat-main {
+    flex-grow: 1; /* Allows this area to take up available space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Important for scrolling message list */
+}
+
+/* Message List */
+.message-list {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto; /* Enables scrolling for messages */
+    background-color: #f9f9f9; /* Slightly different background for message area */
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 75%;
+    line-height: 1.4;
+}
+
+.message p {
+    margin: 0 0 5px 0;
+}
+
+.message .timestamp {
+    font-size: 0.75em;
+    color: #777;
+    display: block;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto; /* Aligns user messages to the right */
+    border-bottom-right-radius: 5px;
+}
+
+.user-message .timestamp {
+    color: #e0e0e0;
+    text-align: right;
+}
+
+.ai-message {
+    background-color: #e9ecef;
+    color: #333;
+    margin-right: auto; /* Aligns AI messages to the left */
+    border-bottom-left-radius: 5px;
+}
+
+.ai-message .timestamp {
+    color: #555;
+    text-align: left;
+}
+
+/* Message Input Area */
+.message-input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+}
+
+#messageInput {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px; /* Rounded input field */
+    resize: none; /* Prevent manual resizing */
+    min-height: 20px; /* Single line height */
+    max-height: 100px; /* Max 4-5 lines before scroll */
+    overflow-y: auto;
+    font-size: 1em;
+    margin-right: 10px;
+}
+
+#sendMessageBtn {
+    background-color: #28a745; /* Green send button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px; /* Rounded button */
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+#sendMessageBtn:hover {
+    background-color: #218838;
+}
+
+/* Configuration Panel Styling (Basic) */
+.config-panel {
+    position: fixed; /* Or absolute if chat-container is relative and fills viewport */
+    top: 0;
+    right: 0;
+    width: 350px; /* Or a percentage */
+    height: 100%;
+    background-color: #fff;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    padding: 20px;
+    z-index: 100; /* Make sure it's on top */
+    /* Transition for sliding in/out can be added later with JS */
+    overflow-y: auto;
+}
+
+.config-panel h2 {
+    margin-top: 0;
+}
+
+#closeConfigPanelBtn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: block; /* Or float right */
+    margin-top: 15px;
+}
+
+#closeConfigPanelBtn:hover {
+    background-color: #c82333;
+}
+
+/* === Configuration Panel Refinements === */
+
+/* Panel Header */
+.config-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.config-panel .panel-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.close-panel-button {
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0 5px;
+}
+.close-panel-button:hover {
+    color: #777;
+}
+
+/* Search Input Styling */
+.config-panel .search-input {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+}
+
+/* Model List & Provider List Containers */
+.model-list-container,
+.provider-list-container {
+    max-height: 200px; /* Or adjust as needed, encourages scrolling for many items */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+/* Individual Card Styling (Model & Provider) */
+.model-card,
+.provider-card {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.model-card:hover,
+.provider-card:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.model-icon,
+.provider-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-right: 15px;
+    border-radius: 4px; /* Optional: if icons look better with slight rounding */
+    background-color: #e0e0e0; /* Placeholder background if image is missing */
+}
+
+.model-card-info,
+.provider-card-info {
+    flex-grow: 1;
+}
+
+.model-card-info h4,
+.provider-card-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+    color: #0056b3; /* Slightly different color for titles */
+}
+
+.model-creator,
+.model-description {
+    font-size: 0.85em;
+    color: #555;
+    margin-bottom: 3px;
+}
+
+.model-description {
+    font-size: 0.9em;
+    color: #333;
+}
+
+/* Tier Info Styling (within Provider Card) */
+.tier-info {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #eee; /* Separator for multiple tiers or just above price */
+}
+.tier-info:first-child { /* if only one tier, or for the first tier */
+    border-top: none;
+    padding-top: 0;
+}
+
+
+.tier-name {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #333;
+    display: block; /* Make it block to appear on its own line or use flex */
+    margin-bottom: 4px;
+}
+
+.tier-name i { /* For Font Awesome icons, if used */
+    margin-right: 6px;
+    color: #007bff;
+}
+
+.price-prediction {
+    font-size: 0.9em;
+    color: #28a745; /* Green for price, for emphasis */
+    font-weight: bold;
+}
+
+.price-prediction i { /* For info icon */
+    margin-left: 4px;
+    color: #777;
+    cursor: help;
+}
+
+/* Select Buttons within Cards */
+.select-model-btn,
+.select-provider-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 15px; /* Space it from the info block */
+    align-self: center; /* Vertically center if flex container is taller */
+    transition: background-color 0.2s;
+}
+
+.select-model-btn:hover,
+.select-provider-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Panel Actions */
+.panel-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    text-align: right; /* Align button to the right */
+}
+
+.apply-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.apply-button:hover {
+    background-color: #218838;
+}
+
+/* Initially hidden provider section */
+.provider-selection-section {
+    /* style="display: none;" is already in the HTML, this is just a note */
+}
+
+/* Add this to style.css */
+.model-card.selected-model,
+.provider-card.selected-provider { /* .selected-provider will be used later */
+    border-color: #007bff; /* Blue border for selected */
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Subtle glow */
+    background-color: #e7f3ff; /* Light blue background */
+}
+
+/* Add this to style.css */
+.chat-header .header-info {
+    display: flex;
+    flex-direction: column; /* Stack title and config display */
+    align-items: flex-start;
+}
+
+.active-config-display {
+    font-size: 0.75em;
+    color: #e0e0e0; /* Light color for secondary header text */
+    margin-top: 3px;
+    font-style: italic;
+}
+
+/* Add this to style.css for model tags */
+.model-tags {
+    margin-top: 5px;
+}
+.tag {
+    display: inline-block;
+    background-color: #e0e0e0;
+    color: #555;
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+}
+
+/* Add to style.css for provider card details */
+.no-providers-message {
+    padding: 15px;
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+.provider-notes {
+    font-size: 0.8em;
+    color: #666;
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+.tier-specs {
+    font-size: 0.8em;
+    color: #444;
+    margin-bottom: 3px;
+}
+
+/* Add to style.css for loading messages */
+.loading-message {
+    padding: 20px;
+    text-align: center;
+    color: #555;
+    font-style: italic;
+}
