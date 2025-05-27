@@ -116,9 +116,9 @@ This setup allows testing the frontend's ability to fetch and display model data
 
 ---
 
-## Running with Docker (Recommended for Simplified Setup)
+## Running with Docker (Single Container Setup)
 
-This project can be run using Docker and Docker Compose, which simplifies setup by managing both the backend and frontend services in containers.
+This project can be run using Docker and Docker Compose, which simplifies setup by managing the combined backend and frontend service in a single container.
 
 ### Prerequisites for Docker
 
@@ -127,36 +127,36 @@ This project can be run using Docker and Docker Compose, which simplifies setup 
 ### Steps to Run with Docker Compose
 
 1.  **Navigate to Project Root:**
-    Open a terminal and ensure you are in the root directory of the project (where `docker-compose.yml` is located).
+    Open a terminal and ensure you are in the root directory of the project (where `docker-compose.yml` and `Dockerfile` are located).
 
 2.  **Set Up Environment Variables (Optional for Backend):**
-    If you have a Hugging Face API token and want the backend to use it, ensure your `.env` file (in the project root) is configured as described in the "Backend Service (FastAPI)" section. Docker Compose will automatically pick up this file if `env_file: - .env` is specified in `docker-compose.yml` for the backend service.
+    If you have a Hugging Face API token and want the backend to use it, ensure your `.env` file (in the project root) is configured as described in the "Backend Service (FastAPI)" section for non-Docker setup. Docker Compose will automatically pick up this file due to the `env_file: - .env` configuration in `docker-compose.yml`.
 
-3.  **Build and Run the Services:**
+3.  **Build and Run the Application:**
     Execute the following command:
     ```bash
     docker-compose up --build
     ```
-    *   `--build`: This flag tells Docker Compose to build the images before starting the containers (useful for the first run or if you've changed Dockerfiles or source code that's part of the image build process).
+    *   `--build`: This flag tells Docker Compose to build the image (or rebuild it if changes were made to `Dockerfile` or application code/assets) before starting the container.
     *   This command will:
-        *   Build the Docker image for the `backend` service using `Dockerfile`.
-        *   Build the Docker image for the `frontend` service using `Dockerfile.frontend`.
-        *   Start containers for both services.
-        *   Display logs from both services in your terminal.
+        *   Build the Docker image for the `app` service using `Dockerfile` (which now includes both backend and frontend assets).
+        *   Start a container for the `app` service.
+        *   Display logs from the service in your terminal.
 
 4.  **Access the Application:**
-    *   **Frontend:** Open your web browser and go to `http://localhost:8080`.
-    *   **Backend API Docs:** You can access the backend's interactive API documentation at `http://localhost:8000/docs`.
+    *   Open your web browser and go to `http://localhost:8080`.
+    *   This single URL will serve the frontend UI. API calls from the frontend (e.g., to `/api/v1/...`) will also be directed to this same service on port 8080 (which maps to port 8000 in the container where FastAPI is listening).
+    *   The backend's interactive API documentation will be available at `http://localhost:8080/docs`.
 
-5.  **Interacting with the Application:**
-    *   The application should function as described in the "Using the Application" section under local non-Docker setup. The frontend (at port 8080) will make API calls to the backend (at port 8000).
-    *   The backend service inside Docker has its code mounted via a volume from your local `./app` directory. If you make changes to the Python backend code, Uvicorn (run with `--reload` in the Docker CMD) should automatically reload. Frontend changes currently require an image rebuild (`docker-compose up --build frontend`) as no volume is mounted for Nginx content.
+5.  **Development Notes:**
+    *   The backend Python code (`./app` directory) is mounted as a volume into the container. If Uvicorn is run with `--reload` in the `Dockerfile`'s `CMD` (our current `CMD` is `["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]`; for development, you might change this in the Dockerfile to include `--reload`), changes to backend code should trigger an automatic reload.
+    *   Changes to frontend static files (`index.html`, `style.css`, `script.js`, `icons/`) will require rebuilding the Docker image (`docker-compose build app` or `docker-compose up --build`) because these files are copied into the image at build time and not mounted as volumes in this single-container setup.
 
 6.  **Stopping the Application:**
     *   Press `CTRL+C` in the terminal where `docker-compose up` is running.
-    *   To remove the containers:
+    *   To remove the container:
       ```bash
       docker-compose down
       ```
 
-This Docker setup provides a consistent environment for running both the frontend and backend services.
+This Docker setup provides a consistent environment for running the combined frontend and backend service.

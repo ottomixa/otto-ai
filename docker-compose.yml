@@ -1,32 +1,22 @@
 version: '3.8'
 
 services:
-  backend:
+  app: # Renamed from 'backend' to 'app' as it now serves both
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: hf_backend_service
+      dockerfile: Dockerfile # This is the backend Dockerfile that now includes frontend assets
+    container_name: hf_combined_app_service
     ports:
-      - "8000:8000"
+      # Map host port 8080 (for browser access) to container port 8000 (where FastAPI serves everything)
+      - "8080:8000" 
     volumes:
-      - ./app:/usr/src/app/app # For live reload during development
+      # Mount backend app code for live reload during development.
+      - ./app:/usr/src/app/app 
     env_file:
-      - .env # Loads variables from .env file (if it exists)
-    networks:
-      - app_network
+      - .env # Loads variables from .env file in the project root (if it exists)
+    # networks:
+    #   - app_network # Optional for single service, can be kept for future expansion
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: hf_frontend_service
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend
-    networks:
-      - app_network
-
-networks:
-  app_network:
-    driver: bridge
+# networks: # Optional for single service
+#   app_network:
+#     driver: bridge
