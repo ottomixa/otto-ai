@@ -437,3 +437,20 @@ body, html {
     color: #555;
     font-style: italic;
 }
+
+/* Add to style.css for error messages */
+.error-message {
+    padding: 20px;
+    text-align: center;
+    color: #dc3545; /* Red for errors */
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* Add to style.css for no results messages */
+.no-results-message {
+    padding: 20px;
+    text-align: center;
+    color: #555; /* Similar to loading message */
+    font-style: italic;
+}
