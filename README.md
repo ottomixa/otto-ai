@@ -113,3 +113,50 @@ You'll need two terminal windows: one for the backend service and one for servin
 *   **Chatting:** The chat functionality itself uses mocked AI responses directly in the frontend JavaScript.
 
 This setup allows testing the frontend's ability to fetch and display model data from the backend, and the UI flow for configuration.
+
+---
+
+## Running with Docker (Recommended for Simplified Setup)
+
+This project can be run using Docker and Docker Compose, which simplifies setup by managing both the backend and frontend services in containers.
+
+### Prerequisites for Docker
+
+*   **Docker Desktop** installed and running (or Docker Engine and Docker Compose CLI on Linux).
+
+### Steps to Run with Docker Compose
+
+1.  **Navigate to Project Root:**
+    Open a terminal and ensure you are in the root directory of the project (where `docker-compose.yml` is located).
+
+2.  **Set Up Environment Variables (Optional for Backend):**
+    If you have a Hugging Face API token and want the backend to use it, ensure your `.env` file (in the project root) is configured as described in the "Backend Service (FastAPI)" section. Docker Compose will automatically pick up this file if `env_file: - .env` is specified in `docker-compose.yml` for the backend service.
+
+3.  **Build and Run the Services:**
+    Execute the following command:
+    ```bash
+    docker-compose up --build
+    ```
+    *   `--build`: This flag tells Docker Compose to build the images before starting the containers (useful for the first run or if you've changed Dockerfiles or source code that's part of the image build process).
+    *   This command will:
+        *   Build the Docker image for the `backend` service using `Dockerfile`.
+        *   Build the Docker image for the `frontend` service using `Dockerfile.frontend`.
+        *   Start containers for both services.
+        *   Display logs from both services in your terminal.
+
+4.  **Access the Application:**
+    *   **Frontend:** Open your web browser and go to `http://localhost:8080`.
+    *   **Backend API Docs:** You can access the backend's interactive API documentation at `http://localhost:8000/docs`.
+
+5.  **Interacting with the Application:**
+    *   The application should function as described in the "Using the Application" section under local non-Docker setup. The frontend (at port 8080) will make API calls to the backend (at port 8000).
+    *   The backend service inside Docker has its code mounted via a volume from your local `./app` directory. If you make changes to the Python backend code, Uvicorn (run with `--reload` in the Docker CMD) should automatically reload. Frontend changes currently require an image rebuild (`docker-compose up --build frontend`) as no volume is mounted for Nginx content.
+
+6.  **Stopping the Application:**
+    *   Press `CTRL+C` in the terminal where `docker-compose up` is running.
+    *   To remove the containers:
+      ```bash
+      docker-compose down
+      ```
+
+This Docker setup provides a consistent environment for running both the frontend and backend services.
