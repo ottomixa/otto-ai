@@ -11,7 +11,7 @@ services:
       - "8080:8000" 
     volumes:
       # Mount backend app code for live reload during development.
-      - ./app:/usr/src/app/app 
+      - ./hf_model_explorer_service/hf_model_explorer_service:/usr/src/app/app 
     env_file:
       - .env # Loads variables from .env file in the project root (if it exists)
     # networks:

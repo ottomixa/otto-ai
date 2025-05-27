@@ -4,17 +4,20 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy the requirements file into the container first for better layer caching
-COPY requirements.txt ./
+# Copy the backend's requirements file into the container
+# Adjusted path based on identified structure
+COPY ./hf_model_explorer_service/requirements.txt ./requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend application code into the container
-COPY ./app ./app
+# Copy the backend application code into a directory named 'app' inside the container
+# Source is ./hf_model_explorer_service/hf_model_explorer_service
+# Destination is ./app (relative to WORKDIR /usr/src/app)
+COPY ./hf_model_explorer_service/hf_model_explorer_service ./app
 
-# --- Add Frontend Assets ---
+# --- Add Frontend Assets (These paths remain correct if files are in project root) ---
 # Create the target directory for static frontend files
 RUN mkdir -p /usr/src/app/static_frontend/icons
 
@@ -25,8 +28,10 @@ COPY script.js /usr/src/app/static_frontend/
 COPY ./icons /usr/src/app/static_frontend/icons/
 # --- End Add Frontend Assets ---
 
-# Expose the port the app runs on (FastAPI will serve both API and frontend on this port)
+# Expose the port the app runs on
 EXPOSE 8000
 
 # Define the command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# This CMD expects the FastAPI 'app' instance to be in 'app/main.py'
+# which aligns with where we copied hf_model_explorer_service/hf_model_explorer_service
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

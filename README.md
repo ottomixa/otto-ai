@@ -129,8 +129,20 @@ This project can be run using Docker and Docker Compose, which simplifies setup 
 1.  **Navigate to Project Root:**
     Open a terminal and ensure you are in the root directory of the project (where `docker-compose.yml` and `Dockerfile` are located).
 
-2.  **Set Up Environment Variables (Optional for Backend):**
-    If you have a Hugging Face API token and want the backend to use it, ensure your `.env` file (in the project root) is configured as described in the "Backend Service (FastAPI)" section for non-Docker setup. Docker Compose will automatically pick up this file due to the `env_file: - .env` configuration in `docker-compose.yml`.
+2.  **Set Up Environment Variables (Optional but Recommended for Backend):**
+    The application backend can use environment variables (e.g., for a Hugging Face API Token). These are loaded from a `.env` file in the project root directory (the same directory as `docker-compose.yml`).
+
+    *   **Create a `.env` file:** If it doesn't exist, you should create it, for example, by copying from the `.env.example` file located in the project root:
+        ```bash
+        # Example: copy if .env.example exists in the root
+        cp .env.example .env 
+        ```
+        Then, edit the `.env` file to add your actual token if you have one:
+        ```env
+        # .env
+        HF_TOKEN="your_hugging_face_api_token_here"
+        ```
+    *   **Note on errors:** The `docker-compose.yml` is configured to use this `.env` file via the `env_file` directive. If this file is specified in `docker-compose.yml` and is missing, Docker Compose might issue a warning or error depending on the version and specific configuration (e.g., if it's listed as mandatory, though usually it's optional). An error like ".env: The system cannot find the file specified" means Docker Compose expected the file at the project root and didn't find it. Even if Docker Compose treats it as optional and proceeds, the application inside the container might later fail if it relies on an environment variable (like `HF_TOKEN`) that was supposed to be set by this file.
 
 3.  **Build and Run the Application:**
     Execute the following command:
