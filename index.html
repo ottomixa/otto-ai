@@ -3,128 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat Interface</title>
-    <!-- We will add a link to our CSS file here later -->
+    <title>AI Chat Interface - New Layout</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Consider adding a proper icon library like Font Awesome later -->
+    <!-- For now, using text/unicode placeholders for icons -->
 </head>
 <body>
-    <div class="chat-container">
-        <!-- Header/Toolbar Area -->
-        <header class="chat-header">
-            <div class="header-info"> <!-- New wrapper -->
-                <h1>AI Chat</h1>
-                <span id="activeConfigDisplay" class="active-config-display"></span> <!-- New element -->
+    <div class="app-layout">
+        <!-- New Left Sidebar -->
+        <aside class="left-sidebar" id="leftSidebar">
+            <div class="sidebar-header">
+                <h2 id="sidebarTitle" class="sidebar-title">Menu</h2> 
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Toggle sidebar" title="Toggle Sidebar">
+                    &#9776; <!-- Hamburger icon placeholder -->
+                </button>
             </div>
-            <button id="configPanelBtn" class="config-panel-button">Configure Model & Provider</button>
-        </header>
+            <nav class="sidebar-nav">
+                <button id="newChatBtn" class="sidebar-button">
+                    <span class="icon-placeholder">+</span> <span class="button-text">New Chat</span>
+                </button>
+                <button id="chatHistoryBtn" class="sidebar-button">
+                    <span class="icon-placeholder">&#128193;</span> <span class="button-text">Chat History</span>
+                </button>
+                <button id="settingsBtn" class="sidebar-button">
+                    <span class="icon-placeholder">&#9881;</span> <span class="button-text">Settings</span>
+                </button>
+            </nav>
 
-        <!-- Main Chat Area -->
-        <main class="chat-main">
-            <!-- Message List Area -->
-            <div id="messageList" class="message-list">
-                <!-- Example Messages (can be removed later, for layout purposes) -->
-                <div class="message user-message">
-                    <p>Hello, who are you?</p>
-                    <span class="timestamp">10:00 AM</span>
+            <!-- Configuration Area - Moved inside sidebar, initially hidden -->
+            <div id="sidebarConfigArea" class="sidebar-config-area" style="display: none;">
+                <div class="panel-header"> <!-- Re-using panel-header style -->
+                    <h3>Configure Model & Provider</h3>
+                    <!-- This specific close button might be optional if selecting another sidebar item closes it -->
                 </div>
-                <div class="message ai-message">
-                    <p>I am a helpful AI assistant. How can I help you today?</p>
-                    <span class="timestamp">10:01 AM</span>
+                <section class="model-selection-section">
+                    <h4>Select AI Model</h4> <!-- Changed from h3 for better hierarchy -->
+                    <input type="search" id="modelSearchInput" class="search-input" placeholder="Search models...">
+                    <div id="modelList" class="model-list-container">
+                        <!-- Model cards will be dynamically rendered here by JS -->
+                    </div>
+                </section>
+                <section id="providerSelectionSection" class="provider-selection-section" style="display: none;">
+                    <h4>Select Provider for <span id="selectedModelNameProviderTitle"></span></h4> <!-- Changed from h3 -->
+                    <div id="providerList" class="provider-list-container">
+                        <!-- Provider cards will be dynamically rendered here by JS -->
+                    </div>
+                </section>
+                <div class="panel-actions">
+                    <button id="applyConfigBtn" class="apply-button">Apply Configuration</button>
                 </div>
-                <!-- More messages will be added here by JavaScript -->
             </div>
+            <!-- End Configuration Area -->
 
-            <!-- Message Input Area -->
-            <div class="message-input-area">
-                <textarea id="messageInput" placeholder="Type your message here..."></textarea>
-                <button id="sendMessageBtn">Send</button>
-            </div>
-        </main>
-
-        <!-- Conversation Configuration Panel (Initially Hidden) -->
-        <aside id="configPanel" class="config-panel" style="display: none;">
-            <!-- Header for the Panel -->
-            <div class="panel-header">
-                <h2>Conversation Configuration</h2>
-                <button id="closeConfigPanelBtnInside" class="close-panel-button" aria-label="Close configuration panel">&times;</button>
-                <!-- Note: Changed ID to closeConfigPanelBtnInside to avoid conflict if old button wasn't removed -->
-            </div>
-
-            <!-- Model Selection Section -->
-            <section class="model-selection-section">
-                <h3>Select AI Model</h3>
-                <input type="search" id="modelSearchInput" class="search-input" placeholder="Search models...">
-                
-                <div id="modelList" class="model-list-container">
-                    <!-- Example Model Card (to be dynamically generated by JS later) -->
-                    <div class="model-card" data-model-id="llama2-7b">
-                        <img src="icons/llama-icon.png" alt="Llama Icon" class="model-icon"> <!-- Placeholder Icon -->
-                        <div class="model-card-info">
-                            <h4>Llama 2 7B Chat</h4>
-                            <p class="model-creator">Meta</p>
-                            <p class="model-description">A versatile 7 billion parameter chat model.</p>
-                        </div>
-                        <button class="select-model-btn">Select</button>
-                    </div>
-
-                    <div class="model-card" data-model-id="mistral-7b">
-                        <img src="icons/mistral-icon.png" alt="Mistral Icon" class="model-icon"> <!-- Placeholder Icon -->
-                        <div class="model-card-info">
-                            <h4>Mistral 7B Instruct</h4>
-                            <p class="model-creator">Mistral AI</p>
-                            <p class="model-description">High-performing instruction-following model.</p>
-                        </div>
-                        <button class="select-model-btn">Select</button>
-                    </div>
-                    <!-- More model cards would be listed here -->
-                </div>
-            </section>
-
-            <!-- Provider & Tier Selection Section (Content will be dynamic based on model selection) -->
-            <section id="providerSelectionSection" class="provider-selection-section" style="display: none;"> <!-- Initially hidden -->
-                <h3>Select Provider for <span id="selectedModelNameProviderTitle"></span></h3>
-                
-                <div id="providerList" class="provider-list-container">
-                    <!-- Example Provider Card (to be dynamically generated by JS later) -->
-                    <div class="provider-card" data-provider-id="replicate-t4">
-                        <img src="icons/replicate-logo.png" alt="Replicate Logo" class="provider-logo"> <!-- Placeholder Icon -->
-                        <div class="provider-card-info">
-                            <h4>Replicate</h4>
-                            <div class="tier-info">
-                                <span class="tier-name">Standard (NVIDIA T4)</span> <!-- Icon placeholder: <i class="fas fa-gpu"></i> -->
-                                <span class="price-prediction">Est. $0.0015 / 1k tokens <i class="fas fa-info-circle" title="Price details..."></i></span>  <!-- Icon placeholder for info -->
-                            </div>
-                        </div>
-                        <button class="select-provider-btn">Use this Provider</button>
-                    </div>
-
-                    <div class="provider-card" data-provider-id="supercompute-a100">
-                        <img src="icons/supercompute-logo.png" alt="SuperCompute Logo" class="provider-logo"> <!-- Placeholder Icon -->
-                        <div class="provider-card-info">
-                            <h4>SuperCompute Cloud</h4>
-                            <div class="tier-info">
-                                <span class="tier-name">Performance (NVIDIA A100)</span> <!-- Icon placeholder: <i class="fas fa-rocket"></i> -->
-                                <span class="price-prediction">Est. $0.0050 / 1k tokens <i class="fas fa-info-circle" title="Price details..."></i></span> <!-- Icon placeholder for info -->
-                            </div>
-                             <div class="tier-info"> <!-- Example of multiple tiers for one provider -->
-                                <span class="tier-name">CPU Ultra</span> <!-- Icon placeholder: <i class="fas fa-microchip"></i> -->
-                                <span class="price-prediction">Est. $0.0005 / 1k tokens <i class="fas fa-info-circle" title="Price details..."></i></span> <!-- Icon placeholder for info -->
-                            </div>
-                        </div>
-                        <button class="select-provider-btn">Use this Provider</button> 
-                    </div>
-                    <!-- More provider cards would be listed here -->
-                </div>
-            </section>
-
-            <!-- Action Buttons for the Panel -->
-            <div class="panel-actions">
-                <button id="applyConfigBtn" class="apply-button">Apply Configuration</button>
-            </div>
         </aside>
+
+        <!-- Main Chat Container -->
+        <div class="chat-container" id="chatContainer"> 
+            <header class="chat-header">
+                <div class="header-info">
+                    <h1>AI Chat</h1>
+                    <span id="activeConfigDisplay" class="active-config-display"></span> 
+                </div>
+            </header>
+
+            <main class="chat-main">
+                <div id="messageList" class="message-list">
+                    <!-- Example Messages -->
+                    <div class="message user-message"><p>Hello!</p><span class="timestamp">10:00 AM</span></div>
+                    <div class="message ai-message"><p>Hi there! How can I help?</p><span class="timestamp">10:01 AM</span></div>
+                </div>
+                <div class="message-input-area">
+                    <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+                    <button id="sendMessageBtn">Send</button>
+                </div>
+            </main>
+        </div>
+
+        <!-- Old Configuration Panel ASIDE element should be GONE from here -->
     </div>
 
-    <!-- We will add a link to our JavaScript file here later -->
     <script src="script.js"></script>
 </body>
 </html>

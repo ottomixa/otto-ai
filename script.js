@@ -19,6 +19,48 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedModel = null; 
     let selectedProvider = null; 
 
+    // --- Sidebar Functionality ---
+    const leftSidebar = document.getElementById('leftSidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const sidebarTitle = document.getElementById('sidebarTitle'); // To change title if needed
+    const appLayout = document.querySelector('.app-layout'); // Get the main app layout container
+
+    const EXPANDED_SIDEBAR_TITLE = "Menu"; // Or your app name
+    const COLLAPSED_SIDEBAR_TITLE = ""; 
+
+    function setSidebarState(isCollapsed) {
+        if (!leftSidebar || !appLayout) return;
+
+        if (isCollapsed) {
+            leftSidebar.classList.add('collapsed');
+            appLayout.classList.add('sidebar-collapsed'); 
+            if (sidebarTitle) sidebarTitle.textContent = COLLAPSED_SIDEBAR_TITLE;
+            if (sidebarToggleBtn) sidebarToggleBtn.innerHTML = '&gt;'; 
+            localStorage.setItem('sidebarCollapsed', 'true');
+        } else {
+            leftSidebar.classList.remove('collapsed');
+            appLayout.classList.remove('sidebar-collapsed'); 
+            if (sidebarTitle) sidebarTitle.textContent = EXPANDED_SIDEBAR_TITLE;
+            if (sidebarToggleBtn) sidebarToggleBtn.innerHTML = '&lt;'; 
+            localStorage.setItem('sidebarCollapsed', 'false');
+        }
+    }
+
+    if (sidebarToggleBtn && leftSidebar) {
+        sidebarToggleBtn.addEventListener('click', () => {
+            const isCollapsed = leftSidebar.classList.contains('collapsed');
+            setSidebarState(!isCollapsed);
+        });
+    }
+
+    // Check initial sidebar state from localStorage
+    const initialSidebarState = localStorage.getItem('sidebarCollapsed') === 'true';
+    // Ensure setSidebarState is defined before calling it
+    if (typeof setSidebarState === "function") { // Check if function exists before calling
+       setSidebarState(initialSidebarState);
+    }
+    // --- End Sidebar Functionality ---
+
     const MOCK_PROVIDER_DATA = {
         "llama2-7b-chat": [
             {"providerId": "replicate", "providerName": "Replicate", "providerIconUrl": "icons/replicate-logo.png", "notes": "Fast cold starts.", "tiers": [{"tierId": "replicate-t4", "tierName": "Standard (NVIDIA T4)", "tierIconClass": "fas fa-gpu", "specs": "NVIDIA T4 GPU", "pricePrediction": "Est. $0.0015 / 1k tokens", "priceDetails": { "per1kTokens": 0.0015, "unit": "1k tokens"}}]},

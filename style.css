@@ -1,27 +1,25 @@
-/* Basic Reset & Body Styling */
+/* Basic Reset & Body Styling - REPLACES any previous body/html global styles */
 body, html {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f6f8;
+    background-color: #f4f6f8; /* Or keep your main app background if preferred */
     color: #333;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    overflow: hidden; /* Prevent body scrollbars when app-layout manages scrolling */
 }
 
-.chat-container {
-    width: 100%;
-    max-width: 800px; /* Max width of the chat window */
-    height: 90vh;   /* Max height of the chat window */
-    max-height: 700px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Important for keeping elements contained */
+#chatContainer { 
+    flex-grow: 1; 
+    height: 100vh; 
+    max-height: none; 
+    max-width: none; 
+    border-radius: 0; 
+    box-shadow: none; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+    background-color: #fff; 
 }
 
 /* Chat Header */
@@ -40,7 +38,7 @@ body, html {
     font-size: 1.2em;
 }
 
-.config-panel-button {
+.config-panel-button { /* This button is inside chat-header, but might be removed or restyled if config panel moves */
     background-color: #0056b3;
     color: white;
     border: none;
@@ -148,44 +146,23 @@ body, html {
     background-color: #218838;
 }
 
-/* Configuration Panel Styling (Basic) */
-.config-panel {
-    position: fixed; /* Or absolute if chat-container is relative and fills viewport */
+/* Configuration Panel Styling */
+/* Note: These styles will now apply to .sidebar-config-area if classes are reused */
+/* Or they can be removed if .sidebar-config-area has its own distinct styles. */
+.config-panel { /* This might be the old overlay panel, consider removing if no longer used */
+    position: fixed; 
     top: 0;
     right: 0;
-    width: 350px; /* Or a percentage */
+    width: 350px; 
     height: 100%;
     background-color: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     padding: 20px;
-    z-index: 100; /* Make sure it's on top */
-    /* Transition for sliding in/out can be added later with JS */
+    z-index: 300; 
     overflow-y: auto;
+    display: none; /* Initially hidden if it's the old panel */
 }
 
-.config-panel h2 {
-    margin-top: 0;
-}
-
-#closeConfigPanelBtn {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: block; /* Or float right */
-    margin-top: 15px;
-}
-
-#closeConfigPanelBtn:hover {
-    background-color: #c82333;
-}
-
-/* === Configuration Panel Refinements === */
-
-/* Panel Header */
 .config-panel .panel-header {
     display: flex;
     justify-content: space-between;
@@ -200,7 +177,7 @@ body, html {
     font-size: 1.3em;
 }
 
-.close-panel-button {
+.close-panel-button { /* This is for the button *inside* the config panel */
     background: none;
     border: none;
     font-size: 1.8em;
@@ -213,55 +190,62 @@ body, html {
     color: #777;
 }
 
-/* Search Input Styling */
-.config-panel .search-input {
-    width: calc(100% - 20px); /* Full width minus padding */
+/* Search Input Styling within Config Panel */
+.config-panel .search-input, 
+.sidebar-config-area .search-input { /* Apply to new area too */
+    width: 100%; 
     padding: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 0.95em;
     box-sizing: border-box;
 }
 
-/* Model List & Provider List Containers */
-.model-list-container,
-.provider-list-container {
-    max-height: 200px; /* Or adjust as needed, encourages scrolling for many items */
+/* Model List & Provider List Containers within Config Panel */
+.config-panel .model-list-container,
+.config-panel .provider-list-container,
+.sidebar-config-area .model-list-container, /* Apply to new area */
+.sidebar-config-area .provider-list-container { /* Apply to new area */
+    max-height: 180px; /* Adjusted for sidebar */
     overflow-y: auto;
     border: 1px solid #eee;
     border-radius: 5px;
     padding: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Adjusted */
 }
 
-/* Individual Card Styling (Model & Provider) */
-.model-card,
-.provider-card {
+/* Individual Card Styling (Model & Provider) within Config Panel */
+.config-panel .model-card,
+.config-panel .provider-card,
+.sidebar-config-area .model-card, /* Apply to new area */
+.sidebar-config-area .provider-card { /* Apply to new area */
     background-color: #f9f9f9;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 10px; /* Adjusted */
+    margin-bottom: 8px; /* Adjusted */
     display: flex;
-    align-items: flex-start; /* Align items to the top */
+    align-items: flex-start; 
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     transition: box-shadow 0.2s ease-in-out;
 }
 
-.model-card:hover,
-.provider-card:hover {
+.config-panel .model-card:hover,
+.config-panel .provider-card:hover,
+.sidebar-config-area .model-card:hover,
+.sidebar-config-area .provider-card:hover {
     box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
 
 .model-icon,
 .provider-logo {
-    width: 40px;
-    height: 40px;
+    width: 30px; /* Adjusted */
+    height: 30px; /* Adjusted */
     object-fit: contain;
-    margin-right: 15px;
-    border-radius: 4px; /* Optional: if icons look better with slight rounding */
-    background-color: #e0e0e0; /* Placeholder background if image is missing */
+    margin-right: 10px; /* Adjusted */
+    border-radius: 4px; 
+    background-color: #e0e0e0; 
 }
 
 .model-card-info,
@@ -271,72 +255,75 @@ body, html {
 
 .model-card-info h4,
 .provider-card-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 1.1em;
-    color: #0056b3; /* Slightly different color for titles */
+    margin: 0 0 3px 0; /* Adjusted */
+    font-size: 1em;    /* Adjusted */
+    color: #0056b3; 
 }
+/* Specific for sidebar config area if needed */
+.sidebar-config-area .model-card-info h4,
+.sidebar-config-area .provider-card-info h4 {
+   color: #1a73e8; /* Blue for links/titles inside the dark sidebar config area */
+}
+
 
 .model-creator,
 .model-description {
-    font-size: 0.85em;
+    font-size: 0.8em; /* Adjusted */
     color: #555;
-    margin-bottom: 3px;
+    margin-bottom: 2px; /* Adjusted */
 }
 
 .model-description {
-    font-size: 0.9em;
+    font-size: 0.85em; /* Adjusted */
     color: #333;
 }
 
-/* Tier Info Styling (within Provider Card) */
 .tier-info {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed #eee; /* Separator for multiple tiers or just above price */
+    margin-top: 6px; /* Adjusted */
+    padding-top: 6px; /* Adjusted */
+    border-top: 1px dashed #eee; 
 }
-.tier-info:first-child { /* if only one tier, or for the first tier */
+.tier-info:first-child {
     border-top: none;
     padding-top: 0;
 }
 
-
 .tier-name {
     font-weight: bold;
-    font-size: 0.9em;
+    font-size: 0.85em; /* Adjusted */
     color: #333;
-    display: block; /* Make it block to appear on its own line or use flex */
-    margin-bottom: 4px;
+    display: block; 
+    margin-bottom: 3px; /* Adjusted */
 }
 
-.tier-name i { /* For Font Awesome icons, if used */
-    margin-right: 6px;
+.tier-name i { 
+    margin-right: 5px; /* Adjusted */
     color: #007bff;
 }
 
 .price-prediction {
-    font-size: 0.9em;
-    color: #28a745; /* Green for price, for emphasis */
+    font-size: 0.85em; /* Adjusted */
+    color: #28a745; 
     font-weight: bold;
 }
 
-.price-prediction i { /* For info icon */
-    margin-left: 4px;
+.price-prediction i { 
+    margin-left: 3px; /* Adjusted */
     color: #777;
     cursor: help;
 }
 
-/* Select Buttons within Cards */
 .select-model-btn,
 .select-provider-btn {
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 6px 10px; /* Adjusted */
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9em;
-    margin-left: 15px; /* Space it from the info block */
-    align-self: center; /* Vertically center if flex container is taller */
+    font-size: 0.85em; /* Adjusted */
+    margin-left: 10px; /* Adjusted */
+    align-self: center; 
     transition: background-color 0.2s;
 }
 
@@ -345,112 +332,294 @@ body, html {
     background-color: #0056b3;
 }
 
-/* Panel Actions */
 .panel-actions {
-    margin-top: 20px;
-    padding-top: 15px;
+    margin-top: 15px; /* Adjusted */
+    padding-top: 10px; /* Adjusted */
     border-top: 1px solid #eee;
-    text-align: right; /* Align button to the right */
+    text-align: right; 
 }
 
 .apply-button {
     background-color: #28a745;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 15px; /* Adjusted */
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 0.95em; /* Adjusted */
 }
 
 .apply-button:hover {
     background-color: #218838;
 }
 
-/* Initially hidden provider section */
-.provider-selection-section {
-    /* style="display: none;" is already in the HTML, this is just a note */
-}
-
-/* Add this to style.css */
 .model-card.selected-model,
-.provider-card.selected-provider { /* .selected-provider will be used later */
-    border-color: #007bff; /* Blue border for selected */
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Subtle glow */
-    background-color: #e7f3ff; /* Light blue background */
+.provider-card.selected-provider { 
+    border-color: #007bff; 
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); 
+    background-color: #e7f3ff; 
 }
 
-/* Add this to style.css */
 .chat-header .header-info {
     display: flex;
-    flex-direction: column; /* Stack title and config display */
+    flex-direction: column; 
     align-items: flex-start;
 }
 
 .active-config-display {
     font-size: 0.75em;
-    color: #e0e0e0; /* Light color for secondary header text */
+    color: #e0e0e0; 
     margin-top: 3px;
     font-style: italic;
 }
 
-/* Add this to style.css for model tags */
 .model-tags {
-    margin-top: 5px;
+    margin-top: 4px; /* Adjusted */
 }
 .tag {
     display: inline-block;
     background-color: #e0e0e0;
     color: #555;
-    font-size: 0.75em;
-    padding: 2px 6px;
+    font-size: 0.7em; /* Adjusted */
+    padding: 2px 5px; /* Adjusted */
     border-radius: 3px;
-    margin-right: 5px;
+    margin-right: 4px; /* Adjusted */
     margin-bottom: 3px;
 }
 
-/* Add to style.css for provider card details */
 .no-providers-message {
-    padding: 15px;
+    padding: 10px; /* Adjusted */
     text-align: center;
     color: #777;
     font-style: italic;
 }
 
 .provider-notes {
-    font-size: 0.8em;
+    font-size: 0.75em; /* Adjusted */
     color: #666;
-    margin-bottom: 8px;
+    margin-bottom: 6px; /* Adjusted */
     font-style: italic;
 }
 
 .tier-specs {
-    font-size: 0.8em;
+    font-size: 0.75em; /* Adjusted */
     color: #444;
-    margin-bottom: 3px;
+    margin-bottom: 2px; /* Adjusted */
 }
 
-/* Add to style.css for loading messages */
 .loading-message {
-    padding: 20px;
+    padding: 15px; /* Adjusted */
     text-align: center;
     color: #555;
     font-style: italic;
 }
 
-/* Add to style.css for error messages */
 .error-message {
-    padding: 20px;
+    padding: 15px; /* Adjusted */
     text-align: center;
-    color: #dc3545; /* Red for errors */
+    color: #dc3545; 
     font-style: italic;
     font-weight: bold;
 }
 
-/* Add to style.css for no results messages */
 .no-results-message {
-    padding: 20px;
+    padding: 15px; /* Adjusted */
     text-align: center;
-    color: #555; /* Similar to loading message */
+    color: #555; 
     font-style: italic;
+}
+
+/* === App Layout & New Left Sidebar Styles === */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.left-sidebar {
+    width: 260px; 
+    background-color: #2c3e50; 
+    color: #ecf0f1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease-in-out;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    z-index: 1000; 
+}
+
+.left-sidebar.collapsed {
+    width: 60px; 
+}
+
+.left-sidebar.collapsed .sidebar-title,
+.left-sidebar.collapsed .button-text {
+    display: none;
+}
+
+.left-sidebar.collapsed .sidebar-button .icon-placeholder {
+    margin-right: 0;
+}
+.left-sidebar.collapsed .sidebar-button {
+    justify-content: center;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    margin-bottom: 15px;
+    min-height: 30px; 
+}
+
+.sidebar-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #ecf0f1;
+    font-size: 1.6em; 
+    cursor: pointer;
+    padding: 0 5px;
+}
+.sidebar-toggle-btn:hover {
+    color: #bdc3c7;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; 
+}
+
+.sidebar-button {
+    display: flex;
+    align-items: center;
+    background-color: #34495e;
+    color: #ecf0f1;
+    border: none;
+    padding: 10px 12px;
+    text-align: left;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.2s ease, padding 0.3s ease-in-out; 
+}
+
+.sidebar-button:hover {
+    background-color: #4a6278;
+}
+
+.sidebar-button .icon-placeholder {
+    margin-right: 10px;
+    font-size: 1.1em; 
+    width: 20px; 
+    text-align: center;
+    display: inline-block;
+}
+
+/* Styles for the configuration area within the sidebar */
+.sidebar-config-area {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #4a6278; 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    display: flex; 
+    flex-direction: column;
+}
+
+.sidebar-config-area .panel-header {
+    position: static; 
+    padding: 5px 0px 10px 0px; 
+    margin-bottom: 10px;
+    /* Ensure h3 is targeted if that's what's in the HTML for this specific header */
+}
+.sidebar-config-area .panel-header h3 { 
+    font-size: 1.1em; 
+    color: #ecf0f1; 
+    margin:0; /* Reset margin for h3 if it's used */
+}
+
+.sidebar-config-area .close-panel-button { 
+    /* This class was for the old overlay panel's X button. */
+    /* If an X button is kept inside sidebarConfigArea's header, it might need different styling. */
+    /* For now, assuming it's not present or handled by other means. */
+}
+
+.sidebar-config-area .search-input {
+    /* Already styled via .config-panel .search-input, but can override if needed */
+    /* Example: background-color: #2c3e50; color: #ecf0f1; border-color: #4a6278; */
+}
+
+.sidebar-config-area .model-list-container,
+.sidebar-config-area .provider-list-container {
+    /* Inherits from .config-panel versions, can adjust if needed */
+    /* Example: border-color: #4a6278; */
+}
+
+.sidebar-config-area .model-card,
+.sidebar-config-area .provider-card {
+    /* Inherits from .config-panel versions, can adjust if needed */
+    background-color: #34495e; /* Darker cards for dark sidebar */
+    border-color: #4a6278;
+}
+.sidebar-config-area .model-card-info h4,
+.sidebar-config-area .provider-card-info h4 {
+   color: #ecf0f1; /* Light text for titles on dark cards */
+}
+.sidebar-config-area .model-creator,
+.sidebar-config-area .model-description,
+.sidebar-config-area .tier-name,
+.sidebar-config-area .tier-specs,
+.sidebar-config-area .provider-notes {
+    color: #bdc3c7; /* Slightly muted light text */
+}
+.sidebar-config-area .tag {
+    background-color: #4a6278; /* Darker tags */
+    color: #ecf0f1;
+}
+.sidebar-config-area .select-model-btn,
+.sidebar-config-area .select-provider-btn {
+    background-color: #1abc9c; /* Teal/Greenish accent */
+}
+.sidebar-config-area .select-model-btn:hover,
+.sidebar-config-area .select-provider-btn:hover {
+    background-color: #16a085;
+}
+.sidebar-config-area .model-card.selected-model,
+.sidebar-config-area .provider-card.selected-provider { 
+    border-color: #1abc9c; 
+    background-color: #4a6278; 
+}
+
+
+.sidebar-config-area .panel-actions {
+    margin-top: auto; 
+    padding-top: 10px;
+    text-align: center; 
+}
+.sidebar-config-area .apply-button {
+    width: 100%; 
+    background-color: #27ae60; /* Green accent */
+}
+.sidebar-config-area .apply-button:hover {
+    background-color: #229954;
+}
+
+
+/* Optional: For specific adjustments to chatContainer when sidebar is collapsed */
+.app-layout.sidebar-collapsed #chatContainer {
+    /* Add specific styles here if needed, e.g., margin-left if sidebar was position:fixed */
 }
