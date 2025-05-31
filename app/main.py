@@ -1,147 +1,72 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-from app.settings import get_setting, update_setting, load_settings, DEFAULT_SETTINGS
-from app.utils import fetch_top_models, search_models, download_model
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 
-class ModelBrowserApp:
-    def __init__(self, root):
-        self.root = root
-        root.title("Hugging Face Model Browser")
+# Assuming your API routers are imported like this
+from .api.endpoints import hf_models
+from fastapi.middleware.cors import CORSMiddleware
 
-        # Ensure initial settings are loaded and model_directory is available
-        loaded_settings = load_settings()
-        initial_model_dir = loaded_settings.get('model_directory', DEFAULT_SETTINGS['model_directory'])
+app = FastAPI(title="AI Model Hub Integration Service with Frontend")
 
-        # Main PanedWindow
-        self.paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
-        self.paned_window.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:8000",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        # Left Frame (Settings)
-        self.left_frame = ttk.Frame(self.paned_window, padding="10")
-        self.paned_window.add(self.left_frame, weight=1)
+app.include_router(hf_models.router, prefix="/api/v1/external-models/huggingface", tags=["Hugging Face Models"])
 
-        ttk.Label(self.left_frame, text="Search Models:").grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
-        self.search_entry = ttk.Entry(self.left_frame, width=30)
-        self.search_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
-        self.search_entry.bind("<Return>", self.perform_search_event)
-        # Search button in case user prefers clicking
-        self.search_button = ttk.Button(self.left_frame, text="Search", command=self.perform_search_event)
-        self.search_button.grid(row=1, column=1, sticky=tk.W, padx=(5,0), pady=(0,10))
+STATIC_FILES_ROOT_IN_CONTAINER = "/usr/src/app/static_frontend"
 
-
-        ttk.Label(self.left_frame, text="Model Download Directory:").grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(0, 5))
-        self.model_dir_entry_var = tk.StringVar(value=initial_model_dir)
-        self.model_dir_entry = ttk.Entry(self.left_frame, textvariable=self.model_dir_entry_var, width=30)
-        self.model_dir_entry.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
-
-        self.save_settings_button = ttk.Button(self.left_frame, text="Save Settings", command=self.save_app_settings)
-        self.save_settings_button.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
-
-        # Right Frame (Model Display)
-        self.right_frame = ttk.Frame(self.paned_window, padding="10")
-        self.paned_window.add(self.right_frame, weight=3)
-
-        self.right_frame.grid_rowconfigure(0, weight=1)
-        self.right_frame.grid_columnconfigure(0, weight=1)
-
-        self.model_listbox = tk.Listbox(self.right_frame, height=15)
-        self.model_listbox.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W), pady=(0,10))
-
-        self.scrollbar = ttk.Scrollbar(self.right_frame, orient=tk.VERTICAL, command=self.model_listbox.yview)
-        self.model_listbox.configure(yscrollcommand=self.scrollbar.set)
-        self.scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S), pady=(0,10))
-
-        self.download_button = ttk.Button(self.right_frame, text="Download Selected Model", command=self.trigger_model_download)
-        self.download_button.grid(row=1, column=0, columnspan=2, sticky=tk.EW)
-
-        self.load_initial_models()
-
-    def _clear_model_listbox(self):
-        self.model_listbox.delete(0, tk.END)
-
-    def _populate_listbox_with_models(self, models):
-        self._clear_model_listbox()
-        if not models:
-            self.model_listbox.insert(tk.END, "No models found.")
-            return
-        for model in models:
-            display_text = f"{model.get('modelId', 'Unknown Model')}"
-            if model.get('pipeline_tag'):
-                display_text += f" ({model.get('pipeline_tag')})"
-            self.model_listbox.insert(tk.END, display_text)
-            # Store the full model_id as part of the item if needed, or rely on parsing
-            # For simplicity, we'll parse from text, but storing data is more robust
-
-    def load_initial_models(self):
-        """Loads and displays the top models when the app starts."""
-        print("Fetching initial top models...")
-        models = fetch_top_models()
-        if models:
-            self._populate_listbox_with_models(models)
-        else:
-            self._clear_model_listbox()
-            self.model_listbox.insert(tk.END, "Failed to load initial models.")
-            messagebox.showerror("API Error", "Could not fetch top models from Hugging Face Hub. Check your internet connection or try again later.")
-
-    def perform_search_event(self, event=None): # event is passed by bind
-        """Handles the search button click or Enter key press in search entry."""
-        query = self.search_entry.get().strip()
-        if not query:
-            print("Empty search query, fetching top models again.")
-            self.load_initial_models() # Or fetch_top_models directly
-            return
-
-        print(f"Searching for models with query: '{query}'")
-        models = search_models(query)
-        if models:
-            self._populate_listbox_with_models(models)
-        else:
-            self._clear_model_listbox()
-            self.model_listbox.insert(tk.END, f"No models found for '{query}'.")
-            messagebox.showinfo("Search Results", f"No models found matching your query: '{query}'.")
+# For local development without Docker, this helps create the dir if running main.py directly
+# and static_frontend is expected to be a sibling of the 'app' directory.
+if not os.path.exists(STATIC_FILES_ROOT_IN_CONTAINER) and "DOCKER_ENV" not in os.environ:
+    # This path logic is for local dev: assumes 'app' is a dir and 'static_frontend' is at project root.
+    # So, if main.py is in 'app/main.py', 'static_frontend' is '../static_frontend'.
+    # This specific local dev path might need adjustment based on actual execution context.
+    # However, for Docker, the absolute path STATIC_FILES_ROOT_IN_CONTAINER is what matters.
+    local_dev_static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static_frontend")
+    if os.path.exists(local_dev_static_path):
+        # In local dev, if we find static_frontend next to app dir, we use that for StaticFiles paths
+        # This is a bit of a hack for local dev; Docker is cleaner.
+        # For now, we'll assume Dockerfile handles placing files into STATIC_FILES_ROOT_IN_CONTAINER
+        pass # The Dockerfile will ensure files are at STATIC_FILES_ROOT_IN_CONTAINER
+    # os.makedirs(STATIC_FILES_ROOT_IN_CONTAINER, exist_ok=True) # Not ideal to create this path in local dev
 
 
-    def save_app_settings(self):
-        """Saves the model download directory."""
-        new_dir = self.model_dir_entry_var.get().strip()
-        if not new_dir:
-            messagebox.showwarning("Validation Error", "Download directory cannot be empty.")
-            return
+app.mount("/icons", StaticFiles(directory=f"{STATIC_FILES_ROOT_IN_CONTAINER}/icons"), name="icons")
 
-        if update_setting('model_directory', new_dir):
-            print(f"Settings saved. Model directory: {new_dir}")
-            messagebox.showinfo("Settings Saved", f"Model download directory updated to:\n{new_dir}")
-        else:
-            print("Failed to save settings.")
-            messagebox.showerror("Save Error", "Failed to save settings. Please check file permissions or disk space.")
+@app.get("/script.js")
+async def serve_script():
+    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/script.js", media_type="application/javascript")
 
-    def trigger_model_download(self):
-        """Initiates download for the selected model."""
-        selected_indices = self.model_listbox.curselection()
-        if not selected_indices:
-            messagebox.showwarning("No Model Selected", "Please select a model from the list before clicking download.")
-            return
+@app.get("/style.css")
+async def serve_style():
+    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/style.css", media_type="text/css")
 
-        selected_item_text = self.model_listbox.get(selected_indices[0])
-        # Basic parsing, assuming format "modelId (pipeline_tag)" or just "modelId"
-        model_id_to_download = selected_item_text.split(" (")[0]
+@app.get("/") # Explicitly serve index.html for root
+async def serve_root_explicitly():
+    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")
 
-        current_download_dir = get_setting('model_directory')
-        if not current_download_dir: # Should ideally not happen if settings are managed well
-            messagebox.showerror("Configuration Error", "Model download directory is not set.")
-            return
+@app.get("/{full_path:path}")
+async def serve_frontend_index_catch_all(request: Request, full_path: str):
+    # Check if the path is likely an API call or a known static asset prefix
+    if full_path.startswith("api/") or \
+       full_path.startswith("docs") or \
+       full_path.startswith("redoc") or \
+       full_path == "openapi.json":
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=404, content={"detail": "Resource not found"})
 
-        print(f"Attempting to download model: {model_id_to_download} to {current_download_dir}")
-
-        # utils.download_model will print its simulation message
-        # In a real app, this might be a threaded operation
-        download_model(model_id_to_download, current_download_dir)
-
-        messagebox.showinfo("Download Initiated",
-                            f"Simulating download of model:\n{model_id_to_download}\n\n"
-                            f"Target directory:\n{current_download_dir}")
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = ModelBrowserApp(root)
-    root.mainloop()
+    # For any other path, serve index.html (typical SPA behavior / frontend routing)
+    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")

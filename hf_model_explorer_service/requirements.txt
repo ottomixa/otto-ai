@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard] # Includes basic server dependencies like gunicorn/uvloop
+pydantic
+pydantic-settings
+huggingface_hub # For interacting with Hugging Face Hub
+python-dotenv # For .env file support (optional but good practice)
+
+# Optional, for development:
+# pytest
+# httpx # For testing FastAPI apps
+# ruff # Linter
+# mypy # Type checker
