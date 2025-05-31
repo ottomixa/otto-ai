@@ -125,3 +125,6 @@ dmypy.json
 
 # Settings file
 settings.json
+
+# Custom model download directory
+downloaded_models/

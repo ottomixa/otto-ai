@@ -1,72 +1,55 @@
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware # To allow frontend requests
+from app.api.endpoints import hf_models as hf_models_router
+from app.core.config import settings # To access settings if needed globally, or for static files
 
-# Assuming your API routers are imported like this
-from .api.endpoints import hf_models
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="AI Model Hub Integration Service with Frontend")
-
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:8000",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:8000",
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# Initialize FastAPI app
+app = FastAPI(
+    title="Hugging Face Model Browser API",
+    version="0.1.0",
+    description="API for browsing, searching, and (simulating) downloading Hugging Face models."
 )
 
-app.include_router(hf_models.router, prefix="/api/v1/external-models/huggingface", tags=["Hugging Face Models"])
+# CORS (Cross-Origin Resource Sharing) Middleware
+# This is important if your frontend is served from a different domain/port
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allows all origins. For production, specify allowed origins.
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], # Allows all standard methods.
+    allow_headers=["*"], # Allows all headers.
+)
 
-STATIC_FILES_ROOT_IN_CONTAINER = "/usr/src/app/static_frontend"
+# Include the Hugging Face models router
+# The prefix /api/v1/hf-models matches the frontend's expected base URL
+app.include_router(
+    hf_models_router.router,
+    prefix="/api/v1/hf-models",
+    tags=["Hugging Face Models"]
+)
 
-# For local development without Docker, this helps create the dir if running main.py directly
-# and static_frontend is expected to be a sibling of the 'app' directory.
-if not os.path.exists(STATIC_FILES_ROOT_IN_CONTAINER) and "DOCKER_ENV" not in os.environ:
-    # This path logic is for local dev: assumes 'app' is a dir and 'static_frontend' is at project root.
-    # So, if main.py is in 'app/main.py', 'static_frontend' is '../static_frontend'.
-    # This specific local dev path might need adjustment based on actual execution context.
-    # However, for Docker, the absolute path STATIC_FILES_ROOT_IN_CONTAINER is what matters.
-    local_dev_static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static_frontend")
-    if os.path.exists(local_dev_static_path):
-        # In local dev, if we find static_frontend next to app dir, we use that for StaticFiles paths
-        # This is a bit of a hack for local dev; Docker is cleaner.
-        # For now, we'll assume Dockerfile handles placing files into STATIC_FILES_ROOT_IN_CONTAINER
-        pass # The Dockerfile will ensure files are at STATIC_FILES_ROOT_IN_CONTAINER
-    # os.makedirs(STATIC_FILES_ROOT_IN_CONTAINER, exist_ok=True) # Not ideal to create this path in local dev
+@app.get("/api/v1/health", tags=["Health"])
+async def health_check():
+    """
+    Simple health check endpoint.
+    """
+    return {"status": "ok"}
+
+# (Optional) Serve static files for a frontend if co-located (not the case here as per project brief)
+# from fastapi.staticfiles import StaticFiles
+# app.mount("/static", StaticFiles(directory="path_to_your_static_files"), name="static")
 
 
-app.mount("/icons", StaticFiles(directory=f"{STATIC_FILES_ROOT_IN_CONTAINER}/icons"), name="icons")
+if __name__ == "__main__":
+    import uvicorn
+    # This is for running the FastAPI app directly using Uvicorn for development
+    # Production deployments would typically use Gunicorn + Uvicorn workers or similar.
+    # The host "0.0.0.0" makes it accessible on the network.
+    # reload=True enables auto-reloading on code changes.
+    print(f"Starting Uvicorn server. API will be at http://localhost:8000")
+    print(f"Default model download directory from settings: {settings.MODEL_DOWNLOAD_DIRECTORY}")
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 
-@app.get("/script.js")
-async def serve_script():
-    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/script.js", media_type="application/javascript")
-
-@app.get("/style.css")
-async def serve_style():
-    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/style.css", media_type="text/css")
-
-@app.get("/") # Explicitly serve index.html for root
-async def serve_root_explicitly():
-    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")
-
-@app.get("/{full_path:path}")
-async def serve_frontend_index_catch_all(request: Request, full_path: str):
-    # Check if the path is likely an API call or a known static asset prefix
-    if full_path.startswith("api/") or \
-       full_path.startswith("docs") or \
-       full_path.startswith("redoc") or \
-       full_path == "openapi.json":
-        from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=404, content={"detail": "Resource not found"})
-
-    # For any other path, serve index.html (typical SPA behavior / frontend routing)
-    return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")
+# Note: The previous Tkinter application code has been removed from this file
+# as it's being replaced by a FastAPI backend service.
+# The frontend (script.js, index.html, style.css) will interact with this API.

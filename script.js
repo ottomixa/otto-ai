@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modelListContainer) modelListContainer.innerHTML = '<p class="loading-message">Loading models...</p>';
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
-        params.append('limit', limit); params.append('page', page); params.append('sort', sortBy); params.append('direction', direction);
+        params.append('limit', limit); params.append('page', page); params.append('sort_by', sortBy); params.append('direction', direction); // Corrected: sort_by
         try {
             const response = await fetch(`${backendBaseUrl}/hf-models/?${params.toString()}`); // Updated endpoint
             if (!response.ok) {
@@ -154,13 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Config panel state FULLY reset.');
     }
 
-    function addMessage(text, sender) { /* ... (implementation as before) ... */ }
-    function handleSendMessage() { /* ... (implementation as before) ... */ }
-    function simulateAIResponse(userText) { /* ... (implementation as before) ... */ }
-    function renderModelCards(modelsToRender) { /* ... (implementation as before) ... */ }
-    function initializeModelSelection() { /* ... (implementation as before, uses new fetchProvidersForModelFromBackend) ... */ }
-    function renderProviderCards(providersData) { /* ... (implementation as before) ... */ }
-
     // Re-add implementations for brevity in this diff, assuming they are the same as phase 13
     function addMessage(text, sender) {
         if (!messageList) return;
@@ -187,8 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!modelListContainer) return;
         modelListContainer.innerHTML = '';
         if (!modelsToRender || modelsToRender.length === 0) {
-            // Displayed by fetchModelsFromBackend if search term was present
-            // If no search term, and still empty, it means no models at all.
             if(!modelSearchInput || !modelSearchInput.value) {
                  modelListContainer.innerHTML = '<p class="no-results-message">No models available to display.</p>';
             }
@@ -198,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div'); card.classList.add('model-card'); card.dataset.modelId = model.id;
             const iconImg = document.createElement('img'); iconImg.src = model.iconUrl || 'icons/default-model-icon.png'; iconImg.alt = `${model.name} Icon`; iconImg.classList.add('model-icon'); iconImg.onerror = () => { iconImg.src = 'icons/default-model-icon.png'; };
             const infoDiv = document.createElement('div'); infoDiv.classList.add('model-card-info');
-            const nameH4 = document.createElement('h4'); nameH4.textContent = model.name || model.id; infoDiv.appendChild(nameH4); // Fallback to ID for name
+            const nameH4 = document.createElement('h4'); nameH4.textContent = model.name || model.id; infoDiv.appendChild(nameH4);
             const creatorP = document.createElement('p'); creatorP.classList.add('model-creator'); creatorP.textContent = model.creator || 'Unknown'; infoDiv.appendChild(creatorP);
             const descriptionP = document.createElement('p'); descriptionP.classList.add('model-description'); descriptionP.textContent = model.description || 'No description.'; infoDiv.appendChild(descriptionP);
             if (model.tags && model.tags.length > 0) {
@@ -208,9 +199,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const selectBtn = document.createElement('button'); selectBtn.classList.add('select-model-btn'); selectBtn.textContent = 'Select';
             card.appendChild(iconImg); card.appendChild(infoDiv); card.appendChild(selectBtn);
+
+            if (selectedEngine === 'local_llama') {
+                const downloadBtn = document.createElement('button');
+                downloadBtn.classList.add('download-model-btn');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.dataset.modelId = model.id; // Ensure model.id is the correct identifier
+                card.appendChild(downloadBtn); // Append the download button to the card
+
+                downloadBtn.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent card selection if button is inside card
+                    const modelIdToDownload = event.currentTarget.dataset.modelId;
+                    triggerDownload(modelIdToDownload); // Call the new triggerDownload function
+                });
+            }
+
             modelListContainer.appendChild(card);
         });
-        initializeModelSelection();
+        initializeModelSelection(); // Make sure this is called to attach listeners to new select buttons
     }
 
     function initializeModelSelection() {
@@ -218,7 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const modelCards = modelListContainer.querySelectorAll('.model-card');
         modelCards.forEach(card => {
             const selectBtn = card.querySelector('.select-model-btn');
-            if (selectBtn && !card.dataset.listenerAttached) {
+            // Check if listener already attached to prevent duplicates if re-rendering
+            if (selectBtn && !card.dataset.selectListenerAttached) {
                 selectBtn.addEventListener('click', async () => {
                     modelCards.forEach(c => c.classList.remove('selected-model'));
                     card.classList.add('selected-model');
@@ -227,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedModel = { id: modelId, name: modelName };
                     if (selectedModelNameProviderTitle) selectedModelNameProviderTitle.textContent = modelName;
                     if (providerSelectionSection) providerSelectionSection.style.display = 'block';
-                    selectedProvider = null;
+                    selectedProvider = null; // Reset provider when new model is selected
                     if (providerListContainer) {
                         const currentProviderCards = providerListContainer.querySelectorAll('.provider-card');
                         currentProviderCards.forEach(pCard => pCard.classList.remove('selected-provider'));
@@ -238,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch (error) { console.error("Failed to render providers:", error); }
                     console.log('Selected Model:', selectedModel);
                 });
-                card.dataset.listenerAttached = 'true';
+                card.dataset.selectListenerAttached = 'true'; // Mark as listener attached
             }
         });
     }
@@ -266,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (tier.specs) { const specsP = document.createElement('p'); specsP.classList.add('tier-specs'); specsP.textContent = tier.specs; tierDiv.appendChild(specsP); }
                     const priceSpan = document.createElement('span'); priceSpan.classList.add('price-prediction'); priceSpan.textContent = tier.pricePrediction || 'N/A';
                     if (tier.priceDetails) {
-                        const infoIcon = document.createElement('i'); infoIcon.className = 'fas fa-info-circle';
+                        const infoIcon = document.createElement('i'); infoIcon.className = 'fas fa-info-circle'; // Assuming Font Awesome or similar
                         let titleText = 'Details: ';
                         if(tier.priceDetails.promptTokensPer1k) titleText += `Prompt ${tier.priceDetails.promptTokensPer1k}, `;
                         if(tier.priceDetails.completionTokensPer1k) titleText += `Completion ${tier.priceDetails.completionTokensPer1k}, `;
@@ -284,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     // Event Listeners
     if (sendMessageBtn) sendMessageBtn.addEventListener('click', handleSendMessage);
     if (messageInput) {
@@ -292,37 +298,22 @@ document.addEventListener('DOMContentLoaded', () => {
         messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = (messageInput.scrollHeight) + 'px'; });
     }
 
-    // Old config panel toggle (if configPanelBtn still existed for an overlay panel)
-    // if (configPanelBtn && configPanel) {
-    //     configPanelBtn.addEventListener('click', () => {
-    //         configPanel.style.display = 'block';
-    //         fetchModelsFromBackend().then(models => { renderModelCards(models); });
-    //     });
-    // }
-    // if (closeConfigPanelBtnInside && configPanel) { // For old overlay panel's close button
-    //     closeConfigPanelBtnInside.addEventListener('click', () => {
-    //         configPanel.style.display = 'none';
-    //         resetConfigPanelState(); // This reset might need to be smarter if panel is just hidden
-    //     });
-    // }
-
-    // New: Settings button to toggle sidebar config area
     if (settingsBtn && sidebarConfigArea) {
         settingsBtn.addEventListener('click', () => {
             const isConfigAreaVisible = sidebarConfigArea.style.display === 'block';
             sidebarConfigArea.style.display = isConfigAreaVisible ? 'none' : 'block';
-            if (isConfigAreaVisible) { // If was visible and now closing
-                resetConfigPanelState();
-            } else { // If opening
-                // Initial state of model section when settings open (before engine selection)
+            if (isConfigAreaVisible) {
+                resetConfigPanelState(); // Reset state when hiding
+            } else {
+                // When showing, ensure engine selection is primary if nothing is selected
                 if (!selectedEngine && modelSelectionSection) {
-                     modelSelectionSection.style.display = 'none';
+                     modelSelectionSection.style.display = 'none'; // Hide model section until engine is chosen
                 }
+                 // If no engine selected, maybe pre-select one or prompt user? For now, it just shows.
             }
         });
     }
 
-    // New: Engine Selection Logic
     if (engineOptionsContainer) {
         const radioButtons = engineOptionsContainer.querySelectorAll('input[type="radio"][name="engineSelection"]');
         radioButtons.forEach(radio => {
@@ -336,20 +327,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         const selectedLabel = engineOptionsContainer.querySelector(`label[for='${radio.id}']`);
                         modelSectionContext.textContent = `(for ${selectedLabel.textContent})`;
                     }
-                    // Reset downstream selections
+                    // Reset subsequent selections
                     if (providerSelectionSection) providerSelectionSection.style.display = 'none';
                     if (providerListContainer) providerListContainer.innerHTML = '';
                     selectedProvider = null;
                     selectedModel = null;
-                    if(modelListContainer) modelListContainer.innerHTML = ''; // Clear previous models
+                    if(modelListContainer) modelListContainer.innerHTML = '';
                     document.querySelectorAll('.model-card.selected-model').forEach(c => c.classList.remove('selected-model'));
 
-
-                    if (selectedEngine === 'local_llama') {
-                        if (modelListContainer) modelListContainer.innerHTML = '<p class="info-message">Local Llama: Model management TBD. Search below.</p>';
-                        if(modelSearchInput) modelSearchInput.placeholder = "Search local/downloadable models...";
-                    } else if (selectedEngine.startsWith('cloud_provider_')) {
-                        if(modelSearchInput) modelSearchInput.placeholder = "Search Hugging Face models...";
+                    if (selectedEngine === 'local_llama' || selectedEngine.startsWith('cloud_provider_')) {
+                        if(modelSearchInput) modelSearchInput.placeholder = selectedEngine === 'local_llama' ? "Search Hugging Face models to download..." : "Search Hugging Face models...";
                         fetchModelsFromBackend({}).then(models => { renderModelCards(models); });
                     }
                 }
@@ -365,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let cardToSelect = null; let specificTierId = null; let specificTierName = ''; let specificPrice = '';
             if (selectBtn) {
                 cardToSelect = selectBtn.closest('.provider-card');
-                const firstTierElement = cardToSelect.querySelector('.tier-info');
+                const firstTierElement = cardToSelect.querySelector('.tier-info'); // Assuming first tier is representative or only one tier per card for selection
                 if (firstTierElement) {
                     specificTierId = firstTierElement.dataset.tierId;
                     specificTierName = firstTierElement.querySelector('.tier-name')?.textContent.trim() || 'N/A';
@@ -384,44 +371,81 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Modified applyConfigBtn listener
     if (applyConfigBtn) {
         applyConfigBtn.addEventListener('click', () => {
-            if (selectedEngine && selectedModel && selectedProvider) { // Check selectedEngine
+            let configComplete = false;
+            if (selectedEngine === 'local_llama' && selectedModel) {
+                // For local_llama, provider selection might be optional or not applicable
+                // For this example, we'll consider it complete if a model is selected.
+                // The "Download" button handles the action. "Apply" might mean setting it as active for chat (future).
+                // For now, let's assume "Apply" means it's ready for chat.
+                selectedProvider = { name: "Local Execution", tier: "N/A", price: "N/A" }; // Placeholder provider for local
+                configComplete = true;
+                if (activeConfigDisplay) activeConfigDisplay.textContent = `Engine: Local Llama, Model: ${selectedModel.name}`;
+            } else if (selectedEngine && selectedEngine.startsWith('cloud_provider_') && selectedModel && selectedProvider) {
+                configComplete = true;
                 if (activeConfigDisplay) activeConfigDisplay.textContent = `Engine: ${selectedEngine}, Model: ${selectedModel.name}, Provider: ${selectedProvider.name} (${selectedProvider.tier}) - ${selectedProvider.price}`;
-                if (sidebarConfigArea) sidebarConfigArea.style.display = 'none'; // Hide sidebar config area
+            }
+
+            if (configComplete) {
+                if (sidebarConfigArea) sidebarConfigArea.style.display = 'none';
                 console.log('Configuration Applied:', { engine: selectedEngine, model: selectedModel, provider: selectedProvider });
-                resetConfigPanelState();
+                resetConfigPanelState(); // Reset after applying
             } else {
-                alert('Please select an engine, a model, and a provider/tier.'); // Updated alert
+                alert('Please select an engine, a model, and for cloud engines, a provider/tier.');
             }
         });
     }
 
-    // Modified modelSearchInput listener
     if (modelSearchInput && modelListContainer) {
         let searchTimeout;
         modelSearchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 const searchTerm = modelSearchInput.value.trim();
-                if (selectedEngine && selectedEngine.startsWith('cloud_provider_')) {
-                   fetchModelsFromBackend({ searchTerm: searchTerm, limit: 20 }).then(models => {
-                       renderModelCards(models);
-                   });
-                } else if (selectedEngine === 'local_llama') {
-                   if (modelListContainer) modelListContainer.innerHTML = `<p class="info-message">Searching local models for '${searchTerm}' is TBD.</p>`;
-                } else {
-                   // Default to searching cloud if no engine selected, or prompt selection
-                   if (modelListContainer && !selectedEngine) modelListContainer.innerHTML = '<p class="info-message">Please select an engine to search models.</p>';
-                   else if (modelListContainer) fetchModelsFromBackend({ searchTerm: searchTerm, limit: 20 }).then(models => { renderModelCards(models); }); // Fallback to cloud search if engine state unclear
-                }
+                fetchModelsFromBackend({ searchTerm: searchTerm, limit: 20 }).then(models => {
+                   renderModelCards(models);
+                });
             }, 300);
         });
     }
 
-    // Initial UI setup calls
-    // resetConfigPanelState(); // Call reset to load initial models if sidebarConfigArea is open by default
-    // If sidebarConfigArea is hidden by default, this call might be better placed in settingsBtn listener when it's opened.
-    // For now, let's assume it's hidden and models load when settings is clicked.
+    // Initial fetch for default view (e.g., when settings panel is opened without engine pre-selection)
+    // This part might be removed if an engine must always be selected first to show models.
+    // fetchModelsFromBackend({}).then(models => renderModelCards(models));
 });
+
+async function triggerDownload(modelId) {
+    console.log(`Requesting download for model: ${modelId}`);
+    // Ensure backendBaseUrl is defined and accessible (it's global in the provided script.js)
+    try {
+        const response = await fetch(`${backendBaseUrl}/hf-models/${encodeURIComponent(modelId)}/download`, {
+            method: 'POST',
+            headers: {
+                // 'Content-Type': 'application/json', // Not strictly needed for this POST if no body is sent
+            },
+            // No body is sent for this specific download trigger
+        });
+
+        const result = await response.json(); // Assuming backend always sends JSON response
+
+        if (response.ok) {
+            console.log('Download request successful:', result);
+            // Display a user-friendly message
+            alert(`Download status for ${result.model_id || modelId}: ${result.message}`);
+        } else {
+            console.error('Download request failed:', result);
+            alert(`Failed to start download for ${modelId}: ${result.detail || result.message || 'Unknown server error'}`);
+        }
+    } catch (error) {
+        console.error('Error during download request function:', error);
+        alert(`Client-side error requesting download for ${modelId}: ${error.message}`);
+    }
+}
+// Note: Corrected sort_by param in fetchModelsFromBackend
+// Note: Improved selectedModel/Provider reset logic in engine selection
+// Note: Corrected listener attachment in initializeModelSelection to avoid duplicates
+// Note: Modified applyConfigBtn logic for local_llama
+// Note: Ensured initializeModelSelection is called after rendering cards.
+// Note: Placeholder for download button logic added in renderModelCards
+// Note: Placeholder for triggerDownload function added at the end

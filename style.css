@@ -713,3 +713,21 @@ body, html {
 .app-layout.sidebar-collapsed #chatContainer {
     /* Add specific styles here if needed, e.g., margin-left if sidebar was position:fixed */
 }
+/* CSS for Download Button - Appended */
+.sidebar-config-area .download-model-btn {
+    background-color: #5bc0de; /* Info blue */
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    margin-left: 5px;
+    margin-top: 5px;
+    align-self: flex-start; /* If model-card is a flex container */
+    transition: background-color 0.2s;
+}
+
+.sidebar-config-area .download-model-btn:hover {
+    background-color: #31b0d5;
+}
