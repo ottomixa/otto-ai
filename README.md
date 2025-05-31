@@ -48,6 +48,7 @@ This project provides a web-based AI chat interface with a backend powered by Fa
         ```bash
         pip install -r requirements.txt
         ```
+            This will install all necessary dependencies, including `fastapi`, `uvicorn`, `requests`, `pydantic-settings`, and `huggingface-hub`.
 
 3.  **(Optional) Environment Variables:**
     Create a `.env` file in the project root if you want to override default settings (e.g., `MODEL_DOWNLOAD_DIRECTORY`). `pydantic-settings` will automatically load it.
@@ -76,9 +77,11 @@ The backend exposes the following main endpoints related to Hugging Face models 
 
 -   `GET /`: Lists and searches for models.
     -   Query Parameters: `search`, `limit`, `page`, `sort_by`, `direction`.
+    -   Note: The `total` field in the JSON response for this endpoint indicates the number of model items fetched from the Hugging Face Hub that match the query, up to a service-defined maximum for a single query (used for pagination calculations by the frontend), not necessarily the absolute grand total available in the Hub.
 -   `POST /{model_id}/download`: Simulates downloading a specific model.
 
 ## Development Notes
 
 -   **CORS:** The FastAPI backend is configured with permissive CORS settings for development. These should be reviewed and restricted for a production environment.
 -   **Model Downloads:** The download functionality is currently a simulation (logs to server console and creates directory). Actual model downloading using `huggingface_hub` or similar would require further implementation in `app/services/huggingface_service.py`.
+-   **Model Information Source:** Model information (listing, searching) is fetched from the Hugging Face Hub using the `huggingface_hub` Python library.
