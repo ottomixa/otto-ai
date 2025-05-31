@@ -18,10 +18,10 @@ class HuggingFaceAPIService:
 
     def _transform_model_info(self, model_info: ModelInfo, include_details: bool = False) -> HFModelBasic | HFModelDetail:
         """Transforms ModelInfo from huggingface_hub to our schema."""
-        
+
         name = self._extract_name_from_id(model_info.id)
         creator = model_info.author if model_info.author else (model_info.id.split('/')[0] if '/' in model_info.id else "Unknown")
-        
+
         description = None
         if model_info.cardData and isinstance(model_info.cardData, CardData):
             try:
@@ -87,7 +87,7 @@ class HuggingFaceAPIService:
         or fetching all and caching for smaller datasets.
         """
         fetch_limit = page * limit # Fetch enough items to cover up to the current page
-        
+
         try:
             models_info_iter = self.hf_api.list_models(
                 search=search,
@@ -97,16 +97,16 @@ class HuggingFaceAPIService:
                 full=False, # Fetch ModelInfo, not full details yet for list view
                 cardData=True # Fetch cardData for description
             )
-            
+
             all_models = list(models_info_iter)
-            
+
             # Slice for the current page
             start_index = (page - 1) * limit
             end_index = start_index + limit
             page_items_info = all_models[start_index:end_index]
 
             transformed_items = [self._transform_model_info(m) for m in page_items_info]
-            
+
             # Simplified total_items and total_pages for this conceptual example
             # In a real app, if search is active, total_items might be len(all_models) up to a certain cap,
             // or if no search, it could be a very large number / a capped query.
@@ -121,7 +121,7 @@ class HuggingFaceAPIService:
                 page=page,
                 limit=limit,
                 total_pages=(total_items_estimation + limit -1) // limit, # Ceiling division
-                total_items=total_items_estimation 
+                total_items=total_items_estimation
             )
         except Exception as e:
             logger.error(f"Error listing models from Hugging Face: {e}")
@@ -145,7 +145,7 @@ class MockProviderService:
         self.mock_provider_data = {
             "llama2-7b-chat": [
                 {
-                    "providerId": "replicate", "providerName": "Replicate", 
+                    "providerId": "replicate", "providerName": "Replicate",
                     "providerIconUrl": "icons/replicate-logo.png",
                      "notes": "Fast cold starts, pay-per-second billing.",
                     "tiers": [
@@ -153,7 +153,7 @@ class MockProviderService:
                     ]
                 },
                 {
-                    "providerId": "supercompute-cloud", "providerName": "SuperCompute Cloud", 
+                    "providerId": "supercompute-cloud", "providerName": "SuperCompute Cloud",
                     "providerIconUrl": "icons/supercompute-logo.png",
                     "notes": "Offers sustained usage discounts.",
                     "tiers": [
@@ -164,7 +164,7 @@ class MockProviderService:
             ],
             "mistral-7b-instruct": [
                  {
-                    "providerId": "replicate", "providerName": "Replicate", 
+                    "providerId": "replicate", "providerName": "Replicate",
                     "providerIconUrl": "icons/replicate-logo.png",
                     "notes": "Excellent for Mistral models.",
                     "tiers": [

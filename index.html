@@ -13,7 +13,7 @@
         <!-- New Left Sidebar -->
         <aside class="left-sidebar" id="leftSidebar">
             <div class="sidebar-header">
-                <h2 id="sidebarTitle" class="sidebar-title">Menu</h2> 
+                <h2 id="sidebarTitle" class="sidebar-title">Menu</h2>
                 <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Toggle sidebar" title="Toggle Sidebar">
                     &#9776; <!-- Hamburger icon placeholder -->
                 </button>
@@ -32,23 +32,45 @@
 
             <!-- Configuration Area - Moved inside sidebar, initially hidden -->
             <div id="sidebarConfigArea" class="sidebar-config-area" style="display: none;">
-                <div class="panel-header"> <!-- Re-using panel-header style -->
+                <div class="panel-header">
                     <h3>Configure Model & Provider</h3>
-                    <!-- This specific close button might be optional if selecting another sidebar item closes it -->
                 </div>
-                <section class="model-selection-section">
-                    <h4>Select AI Model</h4> <!-- Changed from h3 for better hierarchy -->
+
+                <!-- NEW: Engine Selection Section -->
+                <section class="engine-selection-section">
+                    <h4>Select Engine</h4>
+                    <div class="engine-options">
+                        <div class="engine-option">
+                            <input type="radio" id="engineLocalLlama" name="engineSelection" value="local_llama">
+                            <label for="engineLocalLlama">Local Llama</label>
+                        </div>
+                        <div class="engine-option">
+                            <input type="radio" id="engineCloudA" name="engineSelection" value="cloud_provider_a">
+                            <label for="engineCloudA">Cloud Provider Alpha</label>
+                        </div>
+                        <div class="engine-option">
+                            <input type="radio" id="engineCloudB" name="engineSelection" value="cloud_provider_b">
+                            <label for="engineCloudB">Cloud Provider Beta</label>
+                        </div>
+                    </div>
+                </section>
+                <!-- END NEW: Engine Selection Section -->
+
+                <section class="model-selection-section" id="modelSelectionSection" style="display: none;">
+                    <h4>Select AI Model <span id="modelSectionContext" class="model-section-context"></span></h4>
                     <input type="search" id="modelSearchInput" class="search-input" placeholder="Search models...">
                     <div id="modelList" class="model-list-container">
                         <!-- Model cards will be dynamically rendered here by JS -->
                     </div>
                 </section>
+
                 <section id="providerSelectionSection" class="provider-selection-section" style="display: none;">
-                    <h4>Select Provider for <span id="selectedModelNameProviderTitle"></span></h4> <!-- Changed from h3 -->
+                    <h4>Select Provider Tier for <span id="selectedModelNameProviderTitle"></span></h4>
                     <div id="providerList" class="provider-list-container">
-                        <!-- Provider cards will be dynamically rendered here by JS -->
+                        <!-- Provider/Tier cards will be dynamically rendered here by JS -->
                     </div>
                 </section>
+
                 <div class="panel-actions">
                     <button id="applyConfigBtn" class="apply-button">Apply Configuration</button>
                 </div>
@@ -58,11 +80,11 @@
         </aside>
 
         <!-- Main Chat Container -->
-        <div class="chat-container" id="chatContainer"> 
+        <div class="chat-container" id="chatContainer">
             <header class="chat-header">
                 <div class="header-info">
                     <h1>AI Chat</h1>
-                    <span id="activeConfigDisplay" class="active-config-display"></span> 
+                    <span id="activeConfigDisplay" class="active-config-display"></span>
                 </div>
             </header>
 

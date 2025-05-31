@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 import os
 
 class Settings(BaseSettings):
-    hf_token: str | None = os.getenv("HF_TOKEN") 
+    hf_token: str | None = os.getenv("HF_TOKEN")
     # In a real app, you might add more config like API base URLs, default timeouts, etc.
 
     class Config:

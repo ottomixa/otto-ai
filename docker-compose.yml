@@ -8,10 +8,10 @@ services:
     container_name: hf_combined_app_service
     ports:
       # Map host port 8080 (for browser access) to container port 8000 (where FastAPI serves everything)
-      - "8080:8000" 
+      - "8080:8000"
     volumes:
       # Mount backend app code for live reload during development.
-      - ./hf_model_explorer_service/hf_model_explorer_service:/usr/src/app/app 
+      - ./hf_model_explorer_service/hf_model_explorer_service:/usr/src/app/app
     env_file:
       - .env # Loads variables from .env file in the project root (if it exists)
     # networks:

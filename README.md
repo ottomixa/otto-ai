@@ -92,7 +92,7 @@ You'll need two terminal windows: one for the backend service and one for servin
       The simplest way is to use Python's built-in HTTP server.
       ```bash
       # For Python 3.x
-      python -m http.server 8080 
+      python -m http.server 8080
       # Or choose another port if 8080 is busy, e.g., python -m http.server 8081
       ```
       If you have Node.js installed, you can also use `npx serve -l 8080`.
@@ -135,7 +135,7 @@ This project can be run using Docker and Docker Compose, which simplifies setup 
     *   **Create a `.env` file:** If it doesn't exist, you should create it, for example, by copying from the `.env.example` file located in the project root:
         ```bash
         # Example: copy if .env.example exists in the root
-        cp .env.example .env 
+        cp .env.example .env
         ```
         Then, edit the `.env` file to add your actual token if you have one:
         ```env

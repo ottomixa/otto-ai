@@ -4,15 +4,15 @@ from fastapi.responses import FileResponse
 import os
 
 # Assuming your API routers are imported like this
-from .api.endpoints import hf_models 
+from .api.endpoints import hf_models
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="AI Model Hub Integration Service with Frontend")
 
 origins = [
     "http://localhost",
-    "http://localhost:8080", 
-    "http://localhost:8000", 
+    "http://localhost:8080",
+    "http://localhost:8000",
     "http://127.0.0.1:8080",
     "http://127.0.0.1:8000",
 ]
@@ -55,7 +55,7 @@ async def serve_style():
     return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/style.css", media_type="text/css")
 
 @app.get("/") # Explicitly serve index.html for root
-async def serve_root_explicitly(): 
+async def serve_root_explicitly():
     return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")
 
 @app.get("/{full_path:path}")
@@ -67,6 +67,6 @@ async def serve_frontend_index_catch_all(request: Request, full_path: str):
        full_path == "openapi.json":
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=404, content={"detail": "Resource not found"})
-    
+
     # For any other path, serve index.html (typical SPA behavior / frontend routing)
     return FileResponse(f"{STATIC_FILES_ROOT_IN_CONTAINER}/index.html", media_type="text/html")

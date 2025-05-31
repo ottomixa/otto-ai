@@ -16,29 +16,29 @@ def get_nested_val(data: Optional[Dict[str, Any]], path: List[str], default: Opt
 
 def _transform_model_info(model_info: ModelInfo, is_detail: bool = False) -> Dict[str, Any]:
     """
-    Transforms a Hugging Face ModelInfo object to a dictionary 
+    Transforms a Hugging Face ModelInfo object to a dictionary
     suitable for our HFModelBasic or HFModelDetail schema.
     Set is_detail=True to include more fields for HFModelDetail.
     """
-    
-    name = model_info.id 
+
+    name = model_info.id
     creator = model_info.author
-    
+
     description = None
     card_data_content = None
 
     if model_info.cardData: # cardData might be a dict or CardData object
         card_data_content = model_info.cardData.data if isinstance(model_info.cardData, CardData) else model_info.cardData
-        
+
         if isinstance(card_data_content, dict):
             # Try common keys for summary/description
             description = card_data_content.get('model-summary') or \
                           card_data_content.get('model_description') or \
                           get_nested_val(card_data_content, ['model_card', 'overview']) or \
                           get_nested_val(card_data_content, ['model_card', 'summary'])
-            
+
             if not description:
-                readme_text = card_data_content.get('text') 
+                readme_text = card_data_content.get('text')
                 if isinstance(readme_text, str) and len(readme_text) > 0:
                     summary_marker = readme_text.lower().find("## model summary")
                     if summary_marker != -1:
@@ -58,7 +58,7 @@ def _transform_model_info(model_info: ModelInfo, is_detail: bool = False) -> Dic
 
     data_dict = {
         "id": model_info.id,
-        "name": name, 
+        "name": name,
         "creator": creator,
         "description": description,
         "iconUrl": icon_url,
@@ -69,9 +69,9 @@ def _transform_model_info(model_info: ModelInfo, is_detail: bool = False) -> Dic
 
     if is_detail:
         data_dict["pipeline_tag"] = model_info.pipeline_tag
-        data_dict["cardData"] = card_data_content 
+        data_dict["cardData"] = card_data_content
         data_dict["siblings"] = [sib.rfilename for sib in model_info.siblings] if model_info.siblings else []
-        
+
     return data_dict
 
 
@@ -87,18 +87,18 @@ class HuggingFaceAPIService:
         direction: str = "desc",
         page: int = 1
     ) -> Tuple[List[HFModelBasic], Optional[int]]:
-        
+
         hf_direction = -1 if direction == "desc" else 1
-        
+
         all_models_iterator = self.hf_api.list_models(
             search=search,
             sort=sort,
             direction=hf_direction,
-            limit=limit * page if page > 0 else limit, 
+            limit=limit * page if page > 0 else limit,
             cardData=True,
-            full=False 
+            full=False
         )
-        
+
         all_fetched_models_list = list(all_models_iterator)
 
         start_index = (page - 1) * limit if page > 0 else 0
@@ -106,7 +106,7 @@ class HuggingFaceAPIService:
         paginated_models_info = all_fetched_models_list[start_index:end_index]
 
         transformed_models = [HFModelBasic(**_transform_model_info(mi, is_detail=False)) for mi in paginated_models_info]
-        
+
         total_items_estimation = None
         if len(all_fetched_models_list) < (limit * page if page > 0 else limit):
             total_items_estimation = len(all_fetched_models_list)
@@ -118,17 +118,17 @@ class HuggingFaceAPIService:
     def get_model_details_from_hf(self, model_id: str, revision: Optional[str] = None) -> Optional[HFModelDetail]:
         try:
             model_info_obj: ModelInfo = self.hf_api.model_info(
-                repo_id=model_id, 
+                repo_id=model_id,
                 revision=revision,
                 files_metadata=True
             )
-            if not model_info_obj: 
+            if not model_info_obj:
                 return None
 
             transformed_data = _transform_model_info(model_info_obj, is_detail=True)
             return HFModelDetail(**transformed_data)
 
-        except Exception as e: 
+        except Exception as e:
             print(f"Error fetching detailed model info for {model_id}: {e}")
             return None
 
