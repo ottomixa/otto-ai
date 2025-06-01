@@ -1,0 +1,23 @@
+version: '3.8' # Specify a recent Compose file version
+
+services:
+  app: # Name of the service
+    build:
+      context: . # Use the current directory as the build context (where Dockerfile is)
+      dockerfile: Dockerfile # Specify the Dockerfile name
+    container_name: hf_chat_app_container # Name for the running container
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    volumes:
+      # Use a named volume for persisting downloaded models
+      - downloaded_models_volume:/app/downloaded_models
+    environment:
+      # These are already in the Dockerfile but can be reinforced or overridden here
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      # Example: If you wanted to override the download directory via an environment variable
+      # that app.core.config.Settings could pick up:
+      # - MODEL_DOWNLOAD_DIRECTORY=/app/custom_model_storage
+
+volumes:
+  downloaded_models_volume: {} # Defines the named volume

@@ -30,58 +30,61 @@ This project provides a web-based AI chat interface with a backend powered by Fa
 -   `.env.example`: Example for environment variables (though not strictly enforced by current `config.py` setup without explicit `.env` loading).
 -   `downloaded_models/`: Default directory where models are "downloaded" (this directory is in `.gitignore`).
 
-## Running with Docker
+## Running with Docker (Recommended)
 
-This application can be built and run as a Docker container. This is the recommended way to run the application for ease of setup.
+This application can be easily built and run using Docker Compose. This method uses the `Dockerfile` to build the image and the `docker-compose.yml` to configure and run the service.
 
 **Prerequisites:**
-- Docker Desktop (or Docker Engine) installed and running.
+- Docker Desktop (which includes Docker Compose) or Docker Engine with the Docker Compose plugin installed and running.
 
-**1. Build the Docker Image:**
-Navigate to the project root directory (where the `Dockerfile` is located) and run:
+**1. Build and Run with Docker Compose:**
+Navigate to the project root directory (where `docker-compose.yml` and `Dockerfile` are located) and run:
 ```bash
-docker build -t hf-chat-app .
+docker-compose up --build -d
 ```
-This will build the Docker image and tag it as `hf-chat-app`.
+-   `--build`: Forces Docker Compose to build the image before starting the services (recommended for the first run or after code changes).
+-   `-d`: Runs the containers in detached mode (in the background).
 
-**2. Run the Docker Container:**
-Once the image is built, run the container:
-```bash
-docker run -d -p 8000:8000 --name hf-chat-container hf-chat-app
-```
--   `-d`: Runs the container in detached mode (in the background).
--   `-p 8000:8000`: Maps port 8000 of the host to port 8000 of the container (where the FastAPI app runs).
--   `--name hf-chat-container`: Assigns a name to the running container for easier management.
--   `hf-chat-app`: The name of the image to run.
+This command will:
+- Build the Docker image for the `app` service as defined in `Dockerfile`.
+- Start the `app` service (named `hf_chat_app_container` internally).
+- Create and use the named volume `downloaded_models_volume` for model storage at `/app/downloaded_models` inside the container.
 
-**3. Access the Application:**
-Once the container is running, open your web browser and navigate to:
+**2. Access the Application:**
+Once the service is running, open your web browser and navigate to:
 [http://localhost:8000](http://localhost:8000)
 
-You should see the chat interface. The backend API will also be available under `http://localhost:8000/api/v1/`.
+The chat interface and backend API (e.g., `http://localhost:8000/api/v1/...`) will be available.
 
-**4. View Logs (Optional):**
-To view the logs from the running container (e.g., to see FastAPI startup messages or download simulations):
+**3. View Logs:**
+To view the logs from the running `app` service:
 ```bash
-docker logs hf-chat-container -f
-```
-
-**5. Stop and Remove the Container (Optional):**
-To stop the container:
-```bash
-docker stop hf-chat-container
-```
-To remove the container (after stopping):
-```bash
-docker rm hf-chat-container
+docker-compose logs -f app
 ```
 
-**Model Download Directory in Docker:**
-Inside the Docker container, the application is configured to "download" models to the `/app/downloaded_models/` directory by default. If you need to persist these models or change the location when using Docker, you would typically use Docker volumes. For example, to map a local directory `./my_local_hf_models` to the container's download directory:
+**4. Stop the Application:**
+To stop the application (and remove containers, default network):
 ```bash
-docker run -d -p 8000:8000 -v "$(pwd)/my_local_hf_models:/app/downloaded_models" --name hf-chat-container hf-chat-app
+docker-compose down
 ```
-Ensure the local directory (`my_local_hf_models` in this example) exists on your host machine.
+If you want to stop the services but keep the `downloaded_models_volume` (so your downloaded models persist for the next `docker-compose up`):
+```bash
+docker-compose stop
+```
+To remove the named volume explicitly (e.g., for a full cleanup), you can run `docker-compose down -v` or manage Docker volumes separately (`docker volume ls`, `docker volume rm downloaded_models_volume`).
+
+**Model Download Directory with Docker Compose:**
+The `docker-compose.yml` file defines a named volume (`downloaded_models_volume`) that is mounted to `/app/downloaded_models` inside the container. This is where models will be "downloaded" (currently simulated). This data will persist across container restarts if you use `docker-compose stop` and `docker-compose up`. It is removed if you use `docker-compose down -v`.
+
+If you prefer to use a local directory on your host machine (bind mount) instead of a Docker-managed named volume, you can modify the `volumes` section in `docker-compose.yml` for the `app` service. For example:
+```yaml
+services:
+  app:
+    # ... other settings ...
+    volumes:
+      - ./my_local_hf_models:/app/downloaded_models
+```
+Ensure the local directory (`./my_local_hf_models` in this example) exists on your host machine.
 
 ## Manual Setup and Installation
 
