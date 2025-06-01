@@ -2,8 +2,8 @@
 FROM python:3.9-slim
 
 # 2. Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # 3. Set the working directory in the container
 WORKDIR /app

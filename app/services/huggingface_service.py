@@ -2,8 +2,8 @@
 import os
 from fastapi import HTTPException
 from app.core.config import settings
-from huggingface_hub import list_models, ModelFilter
-from huggingface_hub.hf_api import ModelInfo
+from huggingface_hub import list_models
+from huggingface_hub.hf_api import ModelInfo, ModelFilter # ModelFilter moved here
 import datetime
 
 async def get_hf_models(search: str = None, limit: int = 10, page: int = 1, sort_by: str = 'downloads', direction: str = 'desc') -> dict:
