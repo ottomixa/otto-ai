@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles # Added for serving static files
 from fastapi.middleware.cors import CORSMiddleware # To allow frontend requests
 from app.api.endpoints import hf_models as hf_models_router
 from app.core.config import settings # To access settings if needed globally, or for static files
@@ -28,16 +29,11 @@ app.include_router(
     tags=["Hugging Face Models"]
 )
 
-@app.get("/api/v1/health", tags=["Health"])
-async def health_check():
-    """
-    Simple health check endpoint.
-    """
-    return {"status": "ok"}
-
-# (Optional) Serve static files for a frontend if co-located (not the case here as per project brief)
-# from fastapi.staticfiles import StaticFiles
-# app.mount("/static", StaticFiles(directory="path_to_your_static_files"), name="static")
+# Serve static frontend files (HTML, CSS, JS, Icons)
+# This must come AFTER API router inclusions to ensure API paths are prioritized.
+# The `html=True` argument makes it serve `index.html` for the root path ("/").
+# The `directory` path is absolute within the Docker container, based on WORKDIR and COPY instructions.
+app.mount("/", StaticFiles(directory="/app/static_frontend", html=True), name="static_root")
 
 
 if __name__ == "__main__":

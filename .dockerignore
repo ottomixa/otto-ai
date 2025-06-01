@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+htmlcov/
+docs/_build/ # If using Sphinx
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Application-specific / Build artifacts / Secrets
+downloaded_models/ # Important: Exclude downloaded models folder
+*.log
+.env # Exclude .env files if they contain secrets
+# *.db # If using local sqlite databases for testing that shouldn't be in image
+
+# Docker
+Dockerfile # Often excluded, though not strictly necessary if context is managed
+docker-compose.yml # If you had one

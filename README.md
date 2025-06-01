@@ -30,7 +30,62 @@ This project provides a web-based AI chat interface with a backend powered by Fa
 -   `.env.example`: Example for environment variables (though not strictly enforced by current `config.py` setup without explicit `.env` loading).
 -   `downloaded_models/`: Default directory where models are "downloaded" (this directory is in `.gitignore`).
 
-## Setup and Installation
+## Running with Docker
+
+This application can be built and run as a Docker container. This is the recommended way to run the application for ease of setup.
+
+**Prerequisites:**
+- Docker Desktop (or Docker Engine) installed and running.
+
+**1. Build the Docker Image:**
+Navigate to the project root directory (where the `Dockerfile` is located) and run:
+```bash
+docker build -t hf-chat-app .
+```
+This will build the Docker image and tag it as `hf-chat-app`.
+
+**2. Run the Docker Container:**
+Once the image is built, run the container:
+```bash
+docker run -d -p 8000:8000 --name hf-chat-container hf-chat-app
+```
+-   `-d`: Runs the container in detached mode (in the background).
+-   `-p 8000:8000`: Maps port 8000 of the host to port 8000 of the container (where the FastAPI app runs).
+-   `--name hf-chat-container`: Assigns a name to the running container for easier management.
+-   `hf-chat-app`: The name of the image to run.
+
+**3. Access the Application:**
+Once the container is running, open your web browser and navigate to:
+[http://localhost:8000](http://localhost:8000)
+
+You should see the chat interface. The backend API will also be available under `http://localhost:8000/api/v1/`.
+
+**4. View Logs (Optional):**
+To view the logs from the running container (e.g., to see FastAPI startup messages or download simulations):
+```bash
+docker logs hf-chat-container -f
+```
+
+**5. Stop and Remove the Container (Optional):**
+To stop the container:
+```bash
+docker stop hf-chat-container
+```
+To remove the container (after stopping):
+```bash
+docker rm hf-chat-container
+```
+
+**Model Download Directory in Docker:**
+Inside the Docker container, the application is configured to "download" models to the `/app/downloaded_models/` directory by default. If you need to persist these models or change the location when using Docker, you would typically use Docker volumes. For example, to map a local directory `./my_local_hf_models` to the container's download directory:
+```bash
+docker run -d -p 8000:8000 -v "$(pwd)/my_local_hf_models:/app/downloaded_models" --name hf-chat-container hf-chat-app
+```
+Ensure the local directory (`my_local_hf_models` in this example) exists on your host machine.
+
+## Manual Setup and Installation
+
+_(Alternatively, for non-Docker setup, follow these instructions.)_
 
 1.  **Clone the repository:**
     ```bash
@@ -57,7 +112,7 @@ This project provides a web-based AI chat interface with a backend powered by Fa
     MODEL_DOWNLOAD_DIRECTORY=./my_custom_models_dir/
     ```
 
-## Running the Application
+## Running the Application (Manual Setup)
 
 1.  **Start the FastAPI Backend:**
     From the project root directory, run:
