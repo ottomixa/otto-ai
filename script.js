@@ -178,42 +178,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderModelCards(modelsToRender) {
         if (!modelListContainer) return;
-        modelListContainer.innerHTML = '';
+
+        // If modelsToRender is undefined, null, or an empty array,
+        // it implies that fetchModelsFromBackend has already set an appropriate status message
+        // (e.g., "Loading...", "No models found", "Error...", "No models available.").
+        // In this case, renderModelCards should not interfere by clearing or changing the message.
         if (!modelsToRender || modelsToRender.length === 0) {
-            if(!modelSearchInput || !modelSearchInput.value) {
-                 modelListContainer.innerHTML = '<p class="no-results-message">No models available to display.</p>';
-            }
             return;
         }
+
+        // Only if we have actual models to render, clear the list (which might contain "Loading..." or old models)
+        modelListContainer.innerHTML = '';
+
         modelsToRender.forEach(model => {
-            const card = document.createElement('div'); card.classList.add('model-card'); card.dataset.modelId = model.id;
-            const iconImg = document.createElement('img'); iconImg.src = model.iconUrl || 'icons/default-model-icon.png'; iconImg.alt = `${model.name} Icon`; iconImg.classList.add('model-icon'); iconImg.onerror = () => { iconImg.src = 'icons/default-model-icon.png'; };
-            const infoDiv = document.createElement('div'); infoDiv.classList.add('model-card-info');
-            const nameH4 = document.createElement('h4'); nameH4.textContent = model.name || model.id; infoDiv.appendChild(nameH4);
-            const creatorP = document.createElement('p'); creatorP.classList.add('model-creator'); creatorP.textContent = model.creator || 'Unknown'; infoDiv.appendChild(creatorP);
-            const descriptionP = document.createElement('p'); descriptionP.classList.add('model-description'); descriptionP.textContent = model.description || 'No description.'; infoDiv.appendChild(descriptionP);
-            if (model.tags && model.tags.length > 0) {
-                const tagsDiv = document.createElement('div'); tagsDiv.classList.add('model-tags');
-                model.tags.forEach(tagText => { const tagSpan = document.createElement('span'); tagSpan.classList.add('tag'); tagSpan.textContent = tagText; tagsDiv.appendChild(tagSpan); });
-                infoDiv.appendChild(tagsDiv);
-            }
-            const selectBtn = document.createElement('button'); selectBtn.classList.add('select-model-btn'); selectBtn.textContent = 'Select';
-            card.appendChild(iconImg); card.appendChild(infoDiv); card.appendChild(selectBtn);
+            const card = document.createElement('div');
+            card.classList.add('model-card');
+            card.dataset.modelId = model.id;
+
+            const iconImg = document.createElement('img');
+            iconImg.src = model.iconUrl || 'icons/default-model-icon.png';
+            iconImg.alt = `${model.name || model.id} Icon`;
+            iconImg.classList.add('model-icon');
+            iconImg.onerror = () => { iconImg.src = 'icons/default-model-icon.png'; };
+            card.appendChild(iconImg);
+
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('model-card-info');
+            const nameH4 = document.createElement('h4');
+            nameH4.textContent = model.name || model.id; // Fallback to ID for name
+            infoDiv.appendChild(nameH4);
+            card.appendChild(infoDiv);
+
+            const selectBtn = document.createElement('button');
+            selectBtn.classList.add('select-model-btn');
+            selectBtn.textContent = 'Select';
+            card.appendChild(selectBtn);
 
             if (selectedEngine === 'local_llama') {
                 const downloadBtn = document.createElement('button');
                 downloadBtn.classList.add('download-model-btn');
                 downloadBtn.textContent = 'Download';
-                downloadBtn.dataset.modelId = model.id; // Ensure model.id is the correct identifier
-                card.appendChild(downloadBtn); // Append the download button to the card
+                downloadBtn.dataset.modelId = model.id;
+                card.appendChild(downloadBtn);
 
                 downloadBtn.addEventListener('click', (event) => {
-                    event.stopPropagation(); // Prevent card selection if button is inside card
+                    event.stopPropagation();
                     const modelIdToDownload = event.currentTarget.dataset.modelId;
-                    triggerDownload(modelIdToDownload); // Call the new triggerDownload function
+                    triggerDownload(modelIdToDownload);
                 });
             }
-
             modelListContainer.appendChild(card);
         });
         initializeModelSelection(); // Make sure this is called to attach listeners to new select buttons
