@@ -262,7 +262,7 @@ body, html {
 /* Specific for sidebar config area if needed */
 .sidebar-config-area .model-card-info h4,
 .sidebar-config-area .provider-card-info h4 {
-   color: #ecf0f1; /* Light text for titles on dark cards (Updated from #1a73e8) */
+   color: #FFFFFF; /* Changed to pure white for maximum brightness */
 }
 
 

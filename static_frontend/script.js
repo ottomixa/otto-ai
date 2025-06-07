@@ -176,6 +176,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function simulateAIResponse(userText) { addMessage(`Mock AI received: '${userText}'`, 'ai'); }
 
+    // Moved triggerDownload before renderModelCards and initializeModelSelection
+    async function triggerDownload(modelId) {
+        console.log(`Requesting download for model: ${modelId}`);
+        // Ensure backendBaseUrl is defined and accessible (it's global in the provided script.js)
+        try {
+            const response = await fetch(`${backendBaseUrl}/hf-models/${encodeURIComponent(modelId)}/download`, {
+                method: 'POST',
+                headers: {
+                    // 'Content-Type': 'application/json', // Not strictly needed for this POST if no body is sent
+                },
+                // No body is sent for this specific download trigger
+            });
+
+            const result = await response.json(); // Assuming backend always sends JSON response
+
+            if (response.ok) {
+                console.log('Download request successful:', result);
+                // Display a user-friendly message
+                alert(`Download status for ${result.model_id || modelId}: ${result.message}`);
+            } else {
+                console.error('Download request failed:', result);
+                alert(`Failed to start download for ${modelId}: ${result.detail || result.message || 'Unknown server error'}`);
+            }
+        } catch (error) {
+            console.error('Error during download request function:', error);
+            alert(`Client-side error requesting download for ${modelId}: ${error.message}`);
+        }
+    }
+
     function renderModelCards(modelsToRender) {
         if (!modelListContainer) return;
 
@@ -434,33 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // fetchModelsFromBackend({}).then(models => renderModelCards(models));
 });
 
-async function triggerDownload(modelId) {
-    console.log(`Requesting download for model: ${modelId}`);
-    // Ensure backendBaseUrl is defined and accessible (it's global in the provided script.js)
-    try {
-        const response = await fetch(`${backendBaseUrl}/hf-models/${encodeURIComponent(modelId)}/download`, {
-            method: 'POST',
-            headers: {
-                // 'Content-Type': 'application/json', // Not strictly needed for this POST if no body is sent
-            },
-            // No body is sent for this specific download trigger
-        });
-
-        const result = await response.json(); // Assuming backend always sends JSON response
-
-        if (response.ok) {
-            console.log('Download request successful:', result);
-            // Display a user-friendly message
-            alert(`Download status for ${result.model_id || modelId}: ${result.message}`);
-        } else {
-            console.error('Download request failed:', result);
-            alert(`Failed to start download for ${modelId}: ${result.detail || result.message || 'Unknown server error'}`);
-        }
-    } catch (error) {
-        console.error('Error during download request function:', error);
-        alert(`Client-side error requesting download for ${modelId}: ${error.message}`);
-    }
-}
+// Note: triggerDownload function moved up within DOMContentLoaded
 // Note: Corrected sort_by param in fetchModelsFromBackend
 // Note: Improved selectedModel/Provider reset logic in engine selection
 // Note: Corrected listener attachment in initializeModelSelection to avoid duplicates
