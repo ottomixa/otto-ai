@@ -16,10 +16,9 @@ RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -
 COPY ./app /app/app
 
 # 6. Copy frontend static files into a directory to be served
-COPY index.html /app/static_frontend/
-COPY script.js /app/static_frontend/
-COPY style.css /app/static_frontend/
-COPY ./icons /app/static_frontend/icons/
+# All frontend assets (index.html, script.js, style.css, icons/, favicon.ico)
+# are now expected to be in the ./static_frontend/ directory in the build context.
+COPY ./static_frontend /app/static_frontend/
 
 # 7. Expose the port the app runs on
 EXPOSE 8000

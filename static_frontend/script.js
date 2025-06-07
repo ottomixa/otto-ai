@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectBtn = document.createElement('button');
             selectBtn.classList.add('select-model-btn');
             selectBtn.textContent = 'Select';
-            card.appendChild(selectBtn);
+            // DON'T append selectBtn yet if downloadBtn might come first.
 
             if (selectedEngine === 'local_llama') {
                 const downloadBtn = document.createElement('button');
@@ -224,8 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const modelIdToDownload = event.currentTarget.dataset.modelId;
                     triggerDownload(modelIdToDownload);
                 });
-                card.appendChild(downloadBtn); // Appending downloadBtn to card
+                card.appendChild(downloadBtn); // Append Download button first
             }
+            card.appendChild(selectBtn); // Then append Select button
+
             fragment.appendChild(card); // Append card to fragment
         });
 

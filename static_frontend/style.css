@@ -358,6 +358,38 @@ body, html {
     background-color: #16a085;
 }
 
+/* === Updated Button Styles for Stacking in Model Cards === */
+.sidebar-config-area .model-card .select-model-btn,
+.sidebar-config-area .model-card .download-model-btn {
+    display: block;
+    width: 100%;
+    padding: 8px; /* Standardized padding */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em; /* Standardized font size */
+    text-align: center;
+    box-sizing: border-box;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.sidebar-config-area .model-card .download-model-btn {
+    background-color: #5bc0de;
+    margin-bottom: 5px; /* Space below it, before the select button */
+}
+.sidebar-config-area .model-card .download-model-btn:hover {
+    background-color: #31b0d5;
+}
+
+.sidebar-config-area .model-card .select-model-btn {
+    background-color: #1abc9c;
+    /* No top margin needed if download button has bottom margin and is present */
+}
+.sidebar-config-area .model-card .select-model-btn:hover {
+    background-color: #16a085;
+}
+/* End Updated Button Styles */
 
 .panel-actions {
     margin-top: 15px; /* Adjusted */
@@ -475,7 +507,7 @@ body, html {
     font-style: italic;
 }
 .sidebar-config-area .loading-message { /* Specific for sidebar */
-    color: #bdc3c7;
+    color: #ecf0f1; /* Changed to brighter color */
 }
 
 .error-message {
@@ -497,7 +529,14 @@ body, html {
     font-style: italic;
 }
 .sidebar-config-area .no-results-message { /* Specific for sidebar */
-     color: #bdc3c7;
+     color: #ecf0f1; /* Changed to brighter color */
+}
+
+.sidebar-config-area .info-message {
+    padding: 15px;
+    text-align: center;
+    color: #ecf0f1; /* Make info messages bright */
+    font-style: italic;
 }
 
 
@@ -713,21 +752,8 @@ body, html {
 .app-layout.sidebar-collapsed #chatContainer {
     /* Add specific styles here if needed, e.g., margin-left if sidebar was position:fixed */
 }
-/* CSS for Download Button - Appended */
-.sidebar-config-area .download-model-btn {
-    background-color: #5bc0de; /* Info blue */
-    color: white;
-    border: none;
-    padding: 5px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8em;
-    margin-left: 5px;
-    margin-top: 5px;
-    align-self: flex-start; /* If model-card is a flex container */
-    transition: background-color 0.2s;
-}
-
-.sidebar-config-area .download-model-btn:hover {
-    background-color: #31b0d5;
-}
+/* CSS for Download Button - Appended -- This block is now replaced by the consolidated styles above */
+/*
+.sidebar-config-area .download-model-btn { ... }
+.sidebar-config-area .download-model-btn:hover { ... }
+*/
