@@ -179,16 +179,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderModelCards(modelsToRender) {
         if (!modelListContainer) return;
 
-        // If modelsToRender is undefined, null, or an empty array,
-        // it implies that fetchModelsFromBackend has already set an appropriate status message
-        // (e.g., "Loading...", "No models found", "Error...", "No models available.").
-        // In this case, renderModelCards should not interfere by clearing or changing the message.
         if (!modelsToRender || modelsToRender.length === 0) {
+            // Assumes fetchModelsFromBackend handles messages for empty/error states
             return;
         }
 
-        // Only if we have actual models to render, clear the list (which might contain "Loading..." or old models)
-        modelListContainer.innerHTML = '';
+        const fragment = document.createDocumentFragment(); // Create fragment
 
         modelsToRender.forEach(model => {
             const card = document.createElement('div');
@@ -199,13 +195,16 @@ document.addEventListener('DOMContentLoaded', () => {
             iconImg.src = model.iconUrl || 'icons/default-model-icon.png';
             iconImg.alt = `${model.name || model.id} Icon`;
             iconImg.classList.add('model-icon');
-            iconImg.onerror = () => { iconImg.src = 'icons/default-model-icon.png'; };
+            iconImg.onerror = () => {
+                iconImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                iconImg.alt = 'Icon not available';
+            };
             card.appendChild(iconImg);
 
             const infoDiv = document.createElement('div');
             infoDiv.classList.add('model-card-info');
             const nameH4 = document.createElement('h4');
-            nameH4.textContent = model.name || model.id; // Fallback to ID for name
+            nameH4.textContent = model.name || model.id;
             infoDiv.appendChild(nameH4);
             card.appendChild(infoDiv);
 
@@ -219,17 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadBtn.classList.add('download-model-btn');
                 downloadBtn.textContent = 'Download';
                 downloadBtn.dataset.modelId = model.id;
-                card.appendChild(downloadBtn);
 
                 downloadBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
                     const modelIdToDownload = event.currentTarget.dataset.modelId;
                     triggerDownload(modelIdToDownload);
                 });
+                card.appendChild(downloadBtn); // Appending downloadBtn to card
             }
-            modelListContainer.appendChild(card);
+            fragment.appendChild(card); // Append card to fragment
         });
-        initializeModelSelection(); // Make sure this is called to attach listeners to new select buttons
+
+        // After loop, update DOM once
+        modelListContainer.innerHTML = '';
+        modelListContainer.appendChild(fragment);
+
+        initializeModelSelection();
     }
 
     function initializeModelSelection() {
