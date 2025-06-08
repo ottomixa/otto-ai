@@ -215,28 +215,38 @@ body, html {
     margin-bottom: 10px; /* Adjusted */
 }
 
-/* Individual Card Styling (Model & Provider) within Config Panel */
-.config-panel .model-card,
-.config-panel .provider-card,
-.sidebar-config-area .model-card, /* Apply to new area */
-.sidebar-config-area .provider-card { /* Apply to new area */
-    background-color: #f9f9f9;
-    border: 1px solid #e0e0e0;
+/* Base Individual Card Styling (Model & Provider) */
+.model-card,
+.provider-card {
+    background-color: #f9f9f9; /* Default light background */
+    border: 1px solid #e0e0e0; /* Default light border */
     border-radius: 6px;
-    padding: 10px; /* Adjusted */
-    margin-bottom: 8px; /* Adjusted */
+    padding: 10px;
+    margin-bottom: 8px;
     display: flex;
-    align-items: flex-start;
+    align-items: flex-start; /* Aligns icon and info-div/buttons */
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     transition: box-shadow 0.2s ease-in-out;
 }
 
-.config-panel .model-card:hover,
-.config-panel .provider-card:hover,
+.model-card:hover,
+.provider-card:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1); /* Default hover effect */
+}
+
+/* Sidebar-specific overrides for card appearance */
+.sidebar-config-area .model-card,
+.sidebar-config-area .provider-card {
+    background-color: #34495e; /* Dark background for cards in sidebar */
+    border: 1px solid #4a6278; /* Darker border for dark theme */
+    /* Inherits other properties like padding, margin, display, etc. from base .model-card */
+}
+
 .sidebar-config-area .model-card:hover,
 .sidebar-config-area .provider-card:hover {
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2); /* Slightly adjusted shadow for dark theme if needed */
 }
+
 
 .model-icon,
 .provider-logo {
@@ -251,14 +261,53 @@ body, html {
 .model-card-info,
 .provider-card-info {
     flex-grow: 1;
+    /* Buttons will be stacked here if infoDiv becomes flex column */
+    display: flex;
+    flex-direction: column;
 }
 
 .model-card-info h4,
 .provider-card-info h4 {
-    margin: 0 0 3px 0; /* Adjusted */
-    font-size: 1em;    /* Adjusted */
-    color: #0056b3;
+    margin: 0 0 8px 0;  /* Increased bottom margin for buttons below */
+    font-size: 0.9em;   /* Decreased font size */
+    color: #333333;      /* Dark grey color for text */
 }
+
+/* Base styles for buttons inside any model-card (for light theme) */
+.model-card .select-model-btn,
+.model-card .download-model-btn {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-align: center;
+    box-sizing: border-box;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+    margin-top: 8px; /* Standard top margin for spacing */
+    margin-left: 0; /* Remove left/right auto margins */
+    margin-right: 0;
+}
+
+.model-card .select-model-btn {
+    background-color: #007bff; /* Standard blue for select */
+}
+.model-card .select-model-btn:hover {
+    background-color: #0056b3;
+}
+
+.model-card .download-model-btn {
+    background-color: #17a2b8; /* Standard info/cyan for download */
+}
+.model-card .download-model-btn:hover {
+    background-color: #117a8b;
+}
+/* End Base Button Styles */
+
+
 /* Specific for sidebar config area if needed */
 .sidebar-config-area .model-card-info h4,
 .sidebar-config-area .provider-card-info h4 {
@@ -358,25 +407,34 @@ body, html {
     background-color: #16a085;
 }
 
-/* === Updated Button Styles for Stacking in Model Cards === */
+/* === Updated Button Styles for Stacking in Model Cards (Sidebar) === */
 .sidebar-config-area .model-card .select-model-btn,
 .sidebar-config-area .model-card .download-model-btn {
-    display: block;
-    width: 100%;
-    padding: 8px; /* Standardized padding */
+    /* display, width, padding, radius, cursor, font-size, text-align, box-sizing, color, border, transition
+       are inherited from the new more general rules:
+       .model-card .select-model-btn, .model-card .download-model-btn
+       and also from:
+       .sidebar-config-area .select-model-btn, .sidebar-config-area .download-model-btn (if they exist)
+       The prompt's "Final CSS" has these as a combined rule, so we ensure that here.
+    */
+    display: block; /* Ensure these are still block */
+    width: 100%;    /* Ensure they take full width */
+    padding: 8px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9em; /* Standardized font size */
+    font-size: 0.9em;
     text-align: center;
     box-sizing: border-box;
     color: white;
     border: none;
     transition: background-color 0.2s;
+    /* margin-top will be inherited from the base .model-card rule (now 8px) */
 }
 
 .sidebar-config-area .model-card .download-model-btn {
     background-color: #5bc0de;
-    margin-bottom: 5px; /* Space below it, before the select button */
+    margin-top: 8px; /* First button, gets margin from h4 */
+    margin-bottom: 0; /* Reset bottom margin if any, spacing handled by next button's top margin */
 }
 .sidebar-config-area .model-card .download-model-btn:hover {
     background-color: #31b0d5;
@@ -384,7 +442,7 @@ body, html {
 
 .sidebar-config-area .model-card .select-model-btn {
     background-color: #1abc9c;
-    /* No top margin needed if download button has bottom margin and is present */
+    margin-top: 8px; /* Gets margin from download button or h4 if download not present */
 }
 .sidebar-config-area .model-card .select-model-btn:hover {
     background-color: #16a085;

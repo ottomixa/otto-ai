@@ -228,20 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                 iconImg.alt = 'Icon not available';
             };
-            card.appendChild(iconImg);
+            card.appendChild(iconImg); // Icon is a direct child of card
 
             const infoDiv = document.createElement('div');
             infoDiv.classList.add('model-card-info');
+
             const nameH4 = document.createElement('h4');
             nameH4.textContent = model.name || model.id;
-            infoDiv.appendChild(nameH4);
-            card.appendChild(infoDiv);
+            infoDiv.appendChild(nameH4); // Name is child of infoDiv
 
-            const selectBtn = document.createElement('button');
-            selectBtn.classList.add('select-model-btn');
-            selectBtn.textContent = 'Select';
-            // DON'T append selectBtn yet if downloadBtn might come first.
-
+            // Buttons will now be children of infoDiv, after the name
             if (selectedEngine === 'local_llama') {
                 const downloadBtn = document.createElement('button');
                 downloadBtn.classList.add('download-model-btn');
@@ -253,9 +249,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const modelIdToDownload = event.currentTarget.dataset.modelId;
                     triggerDownload(modelIdToDownload);
                 });
-                card.appendChild(downloadBtn); // Append Download button first
+                infoDiv.appendChild(downloadBtn); // Append Download button to infoDiv
             }
-            card.appendChild(selectBtn); // Then append Select button
+
+            const selectBtn = document.createElement('button');
+            selectBtn.classList.add('select-model-btn');
+            selectBtn.textContent = 'Select';
+            infoDiv.appendChild(selectBtn); // Append Select button to infoDiv
+
+            card.appendChild(infoDiv); // Append infoDiv (containing name and buttons) to card
 
             fragment.appendChild(card); // Append card to fragment
         });
