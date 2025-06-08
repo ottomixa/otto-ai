@@ -1,174 +1,145 @@
-# AI Conversational Interface with Custom Model & Backend Selection
+# AI Chat Interface with Hugging Face Model Browser
 
-This project is a web application designed to provide a flexible AI conversational experience. Users can select from various AI models and choose different backend services (simulating GPU providers) to run these models. The application features a pay-per-use conceptual billing system and aims to integrate with external model hubs like Hugging Face for model discovery.
+This project provides a web-based AI chat interface with a backend powered by FastAPI. It includes functionality to browse, search, and simulate downloading models from the Hugging Face Hub.
 
-## Project Structure Overview
+## Features
 
+-   **Chat Interface:** A responsive UI for interacting with an AI (currently mock responses).
+-   **Hugging Face Model Browser:**
+    -   View and search for models from the Hugging Face Hub via backend API.
+    -   Conditionally display a "Download" button for models when "Local Llama" engine is selected.
+    -   Simulate model downloads to a server-configured directory.
+-   **Engine Selection:** Choose between different "engines" (e.g., Local Llama, Cloud Providers) to contextually change UI and model sources.
+-   **FastAPI Backend:** Serves model information and handles download requests.
+
+## Project Structure
+
+-   `app/`: Contains the FastAPI backend application.
+    -   `api/endpoints/hf_models.py`: API endpoints for Hugging Face model operations.
+    -   `services/huggingface_service.py`: Business logic for interacting with Hugging Face API.
+    -   `schemas/model_schemas.py`: Pydantic schemas for data validation.
+    -   `core/config.py`: Backend configuration (e.g., model download directory).
+    -   `main.py`: FastAPI app instance and main router.
+-   `icons/`: Placeholder icons for the UI.
+-   `tests/`: Placeholder for backend tests.
+-   `index.html`: The main frontend HTML file.
+-   `script.js`: Frontend JavaScript logic for UI interactions and API calls.
+-   `style.css`: Frontend CSS styles.
+-   `requirements.txt`: Python dependencies for the backend.
+-   `README.md`: This file.
+-   `.env.example`: Example for environment variables (though not strictly enforced by current `config.py` setup without explicit `.env` loading).
+-   `downloaded_models/`: Default directory where models are "downloaded" (this directory is in `.gitignore`).
+
+## Running with Docker (Recommended)
+
+This application can be easily built and run using Docker Compose. This method uses the `Dockerfile` to build the image and the `docker-compose.yml` to configure and run the service.
+
+**Prerequisites:**
+- Docker Desktop (which includes Docker Compose) or Docker Engine with the Docker Compose plugin installed and running.
+
+**1. Build and Run with Docker Compose:**
+Navigate to the project root directory (where `docker-compose.yml` and `Dockerfile` are located) and run:
+```bash
+docker-compose up --build -d
 ```
-.
-├── app/                     # FastAPI backend application
-│   ├── api/                 # API endpoint definitions
-│   │   └── endpoints/
-│   │       └── hf_models.py # Endpoints for Hugging Face models
-│   ├── core/                # Core components like config
-│   │   └── config.py
-│   ├── services/            # Business logic, e.g., interacting with Hugging Face
-│   │   └── huggingface_service.py
-│   ├── schemas/             # Pydantic schemas for data validation
-│   │   └── model_schemas.py
-│   └── main.py              # FastAPI app instance and main router
-├── icons/                   # Placeholder icons for UI
-│   ├── default-model-icon.png
-│   ├── default-provider-logo.png
-│   ├── llama-icon.png
-│   ├── mistral-icon.png
-│   ├── codellama-icon.png
-│   ├── replicate-logo.png
-│   └── supercompute-logo.png
-├── tests/                   # Backend tests (conceptual)
-│   └── api/
-│       └── endpoints/
-│           └── test_hf_models.py
-├── .env.example             # Example environment variables for backend
-├── index.html               # Main frontend HTML file
-├── script.js                # Frontend JavaScript logic
-├── style.css                # Frontend CSS styles
-└── README.md                # This file
-└── requirements.txt         # Python dependencies for backend
+-   `--build`: Forces Docker Compose to build the image before starting the services (recommended for the first run or after code changes).
+-   `-d`: Runs the containers in detached mode (in the background).
+
+This command will:
+- Build the Docker image for the `app` service as defined in `Dockerfile`.
+- Start the `app` service (named `hf_chat_app_container` internally).
+- Create and use the named volume `downloaded_models_volume` for model storage at `/app/downloaded_models` inside the container.
+
+**2. Access the Application:**
+Once the service is running, open your web browser and navigate to:
+[http://localhost:8000](http://localhost:8000)
+
+The chat interface and backend API (e.g., `http://localhost:8000/api/v1/...`) will be available.
+
+**3. View Logs:**
+To view the logs from the running `app` service:
+```bash
+docker-compose logs -f app
 ```
 
-## Prerequisites
+**4. Stop the Application:**
+To stop the application (and remove containers, default network):
+```bash
+docker-compose down
+```
+If you want to stop the services but keep the `downloaded_models_volume` (so your downloaded models persist for the next `docker-compose up`):
+```bash
+docker-compose stop
+```
+To remove the named volume explicitly (e.g., for a full cleanup), you can run `docker-compose down -v` or manage Docker volumes separately (`docker volume ls`, `docker volume rm downloaded_models_volume`).
 
-*   **Python 3.8+:** For the backend service.
-*   **pip:** Python package installer.
-*   **Web Browser:** For accessing the frontend (e.g., Chrome, Firefox, Edge).
-*   **(Optional) Hugging Face API Token:** If you want to make authenticated requests to the Hugging Face Hub (for higher rate limits or private models, though not strictly necessary for the current public model listing).
+**Model Download Directory with Docker Compose:**
+The `docker-compose.yml` file defines a named volume (`downloaded_models_volume`) that is mounted to `/app/downloaded_models` inside the container. This is where models will be "downloaded" (currently simulated). This data will persist across container restarts if you use `docker-compose stop` and `docker-compose up`. It is removed if you use `docker-compose down -v`.
 
-## Running the Application Locally
+If you prefer to use a local directory on your host machine (bind mount) instead of a Docker-managed named volume, you can modify the `volumes` section in `docker-compose.yml` for the `app` service. For example:
+```yaml
+services:
+  app:
+    # ... other settings ...
+    volumes:
+      - ./my_local_hf_models:/app/downloaded_models
+```
+Ensure the local directory (`./my_local_hf_models` in this example) exists on your host machine.
 
-You'll need two terminal windows: one for the backend service and one for serving the frontend.
+## Manual Setup and Installation
 
-### 1. Backend Service (FastAPI)
+_(Alternatively, for non-Docker setup, follow these instructions.)_
 
-   a. **Navigate to Project Root:**
-      Open a terminal and navigate to the root directory of the project (`hf_integration_service/` or similar, where `app/` and `requirements.txt` are located).
-      ```bash
-      cd path/to/your_project_root
-      ```
-
-   b. **Create and Activate Virtual Environment (Recommended):**
-      ```bash
-      python -m venv .venv
-      # On Windows:
-      # .venv\Scripts\activate
-      # On macOS/Linux:
-      # source .venv/bin/activate
-      ```
-
-   c. **Install Dependencies:**
-      ```bash
-      pip install -r requirements.txt
-      ```
-
-   d. **Set Up Environment Variables (Optional):**
-      If you have a Hugging Face API token, create a `.env` file in the project root (copy from `.env.example`):
-      ```env
-      # .env
-      HF_TOKEN="your_hugging_face_api_token_here"
-      ```
-
-   e. **Run the Backend:**
-      ```bash
-      uvicorn app.main:app --reload --port 8000
-      ```
-      The backend should now be running on `http://127.0.0.1:8000`. You can check its interactive API documentation at `http://127.0.0.1:8000/docs`.
-
-### 2. Frontend (HTML/CSS/JS)
-
-   a. **Navigate to Project Root (if not already there):**
-      Open a *new* terminal window and navigate to the same project root directory where `index.html` is located.
-
-   b. **Serve the Frontend:**
-      The simplest way is to use Python's built-in HTTP server.
-      ```bash
-      # For Python 3.x
-      python -m http.server 8080
-      # Or choose another port if 8080 is busy, e.g., python -m http.server 8081
-      ```
-      If you have Node.js installed, you can also use `npx serve -l 8080`.
-      Alternatively, if using VS Code, the "Live Server" extension is a good option.
-
-   c. **Access the Application:**
-      Open your web browser and go to `http://127.0.0.1:8080` (or the port you chose for the frontend server).
-
-## Using the Application
-
-*   The main chat interface will be displayed.
-*   Click the "Configure Model & Provider" button to open the configuration panel.
-*   **Model Loading:** The panel will attempt to fetch models from your locally running backend (`http://127.0.0.1:8000/api/v1/external-models/huggingface`).
-    *   You should see a "Loading models..." message, then the list of models (initially top 10 downloaded from Hugging Face Hub via your backend).
-    *   You can search for models.
-*   **Provider Loading:** When you select a model, the provider section will show "Loading providers..." and then display *mock* provider data (as the backend endpoint for dynamic providers per model is not yet built).
-*   **Applying Configuration:** After selecting a model and a (mock) provider, click "Apply Configuration". The panel will close, and the main chat header will display your selection.
-*   **Chatting:** The chat functionality itself uses mocked AI responses directly in the frontend JavaScript.
-
-This setup allows testing the frontend's ability to fetch and display model data from the backend, and the UI flow for configuration.
-
----
-
-## Running with Docker (Single Container Setup)
-
-This project can be run using Docker and Docker Compose, which simplifies setup by managing the combined backend and frontend service in a single container.
-
-### Prerequisites for Docker
-
-*   **Docker Desktop** installed and running (or Docker Engine and Docker Compose CLI on Linux).
-
-### Steps to Run with Docker Compose
-
-1.  **Navigate to Project Root:**
-    Open a terminal and ensure you are in the root directory of the project (where `docker-compose.yml` and `Dockerfile` are located).
-
-2.  **Set Up Environment Variables (Optional but Recommended for Backend):**
-    The application backend can use environment variables (e.g., for a Hugging Face API Token). These are loaded from a `.env` file in the project root directory (the same directory as `docker-compose.yml`).
-
-    *   **Create a `.env` file:** If it doesn't exist, you should create it, for example, by copying from the `.env.example` file located in the project root:
-        ```bash
-        # Example: copy if .env.example exists in the root
-        cp .env.example .env
-        ```
-        Then, edit the `.env` file to add your actual token if you have one:
-        ```env
-        # .env
-        HF_TOKEN="your_hugging_face_api_token_here"
-        ```
-    *   **Note on errors:** The `docker-compose.yml` is configured to use this `.env` file via the `env_file` directive. If this file is specified in `docker-compose.yml` and is missing, Docker Compose might issue a warning or error depending on the version and specific configuration (e.g., if it's listed as mandatory, though usually it's optional). An error like ".env: The system cannot find the file specified" means Docker Compose expected the file at the project root and didn't find it. Even if Docker Compose treats it as optional and proceeds, the application inside the container might later fail if it relies on an environment variable (like `HF_TOKEN`) that was supposed to be set by this file.
-
-3.  **Build and Run the Application:**
-    Execute the following command:
+1.  **Clone the repository:**
     ```bash
-    docker-compose up --build
+    git clone <repository_url>
+    cd <repository_name>
     ```
-    *   `--build`: This flag tells Docker Compose to build the image (or rebuild it if changes were made to `Dockerfile` or application code/assets) before starting the container.
-    *   This command will:
-        *   Build the Docker image for the `app` service using `Dockerfile` (which now includes both backend and frontend assets).
-        *   Start a container for the `app` service.
-        *   Display logs from the service in your terminal.
 
-4.  **Access the Application:**
-    *   Open your web browser and go to `http://localhost:8080`.
-    *   This single URL will serve the frontend UI. API calls from the frontend (e.g., to `/api/v1/...`) will also be directed to this same service on port 8080 (which maps to port 8000 in the container where FastAPI is listening).
-    *   The backend's interactive API documentation will be available at `http://localhost:8080/docs`.
+2.  **Set up Python Backend:**
+    -   Create and activate a virtual environment:
+        ```bash
+        python -m venv venv
+        source venv/bin/activate  # On Windows: venv\Scripts\activate
+        ```
+    -   Install Python dependencies:
+        ```bash
+        pip install -r requirements.txt
+        ```
+            This will install all necessary dependencies, including `fastapi`, `uvicorn`, `requests`, `pydantic-settings`, and `huggingface-hub`.
 
-5.  **Development Notes:**
-    *   The backend Python code (`./app` directory) is mounted as a volume into the container. If Uvicorn is run with `--reload` in the `Dockerfile`'s `CMD` (our current `CMD` is `["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]`; for development, you might change this in the Dockerfile to include `--reload`), changes to backend code should trigger an automatic reload.
-    *   Changes to frontend static files (`index.html`, `style.css`, `script.js`, `icons/`) will require rebuilding the Docker image (`docker-compose build app` or `docker-compose up --build`) because these files are copied into the image at build time and not mounted as volumes in this single-container setup.
+3.  **(Optional) Environment Variables:**
+    Create a `.env` file in the project root if you want to override default settings (e.g., `MODEL_DOWNLOAD_DIRECTORY`). `pydantic-settings` will automatically load it.
+    Example content for `.env`:
+    ```
+    MODEL_DOWNLOAD_DIRECTORY=./my_custom_models_dir/
+    ```
 
-6.  **Stopping the Application:**
-    *   Press `CTRL+C` in the terminal where `docker-compose up` is running.
-    *   To remove the container:
-      ```bash
-      docker-compose down
-      ```
+## Running the Application (Manual Setup)
 
-This Docker setup provides a consistent environment for running the combined frontend and backend service.
+1.  **Start the FastAPI Backend:**
+    From the project root directory, run:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
+    The backend will typically be available at `http://127.0.0.1:8000`.
+
+2.  **Open the Frontend:**
+    Open the `index.html` file directly in your web browser.
+
+You should now be able to interact with the chat interface and use the settings panel to browse Hugging Face models.
+
+## API Endpoints
+
+The backend exposes the following main endpoints related to Hugging Face models under the `/api/v1/hf-models` prefix:
+
+-   `GET /`: Lists and searches for models.
+    -   Query Parameters: `search`, `limit`, `page`, `sort_by`, `direction`.
+    -   Note: The `total` field in the JSON response for this endpoint indicates the number of model items fetched from the Hugging Face Hub that match the query, up to a service-defined maximum for a single query (used for pagination calculations by the frontend), not necessarily the absolute grand total available in the Hub.
+-   `POST /{model_id}/download`: Simulates downloading a specific model.
+
+## Development Notes
+
+-   **CORS:** The FastAPI backend is configured with permissive CORS settings for development. These should be reviewed and restricted for a production environment.
+-   **Model Downloads:** The download functionality is currently a simulation (logs to server console and creates directory). Actual model downloading using `huggingface_hub` or similar would require further implementation in `app/services/huggingface_service.py`.
+-   **Model Information Source:** Model information (listing, searching) is fetched from the Hugging Face Hub using the `huggingface_hub` Python library.

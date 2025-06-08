@@ -1,137 +1,92 @@
-from huggingface_hub import HfApi, ModelInfo, CardData
-from typing import List, Optional, Tuple, Any, Dict
-from ..schemas.model_schemas import HFModelBasic, HFModelDetail # Ensure correct relative import
-# from ..core.config import settings # Assuming settings might be imported where instance is created
+# Full content for app/services/huggingface_service.py
+import os
+from fastapi import HTTPException
+from app.core.config import settings
+from huggingface_hub import list_models # Keep this
+from huggingface_hub.hf_api import ModelInfo # Keep this
+import datetime
 
-# Helper to safely get nested dictionary values
-def get_nested_val(data: Optional[Dict[str, Any]], path: List[str], default: Optional[Any] = None) -> Optional[Any]:
-    if not data:
-        return default
-    current = data
-    for key in path:
-        if not isinstance(current, dict) or key not in current:
-            return default
-        current = current[key]
-    return current
+async def get_hf_models(search: str = None, limit: int = 10, page: int = 1, sort_by: str = 'downloads', direction: str = 'desc') -> dict:
+    try:
+        sort_field = sort_by if sort_by in ['downloads', 'likes', 'lastModified'] else 'lastModified'
+        sort_direction = -1 if direction == 'desc' else 1
 
-def _transform_model_info(model_info: ModelInfo, is_detail: bool = False) -> Dict[str, Any]:
-    """
-    Transforms a Hugging Face ModelInfo object to a dictionary
-    suitable for our HFModelBasic or HFModelDetail schema.
-    Set is_detail=True to include more fields for HFModelDetail.
-    """
+        # The fetch_api_limit logic was changed in the prompt compared to previous version.
+        # Previous was: api_fetch_limit = page * limit
+        # New prompt for this step has: fetch_api_limit = min((page + 1) * limit, 200)
+        # This change makes sense to potentially fetch one page ahead for 'total' calculation or lookahead.
+        # Let's stick to what's in the prompt for this step.
+        fetch_api_limit = min((page + 1) * limit, 200)
 
-    name = model_info.id
-    creator = model_info.author
+        search_term_for_api = search if search and search.strip() else None
 
-    description = None
-    card_data_content = None
-
-    if model_info.cardData: # cardData might be a dict or CardData object
-        card_data_content = model_info.cardData.data if isinstance(model_info.cardData, CardData) else model_info.cardData
-
-        if isinstance(card_data_content, dict):
-            # Try common keys for summary/description
-            description = card_data_content.get('model-summary') or \
-                          card_data_content.get('model_description') or \
-                          get_nested_val(card_data_content, ['model_card', 'overview']) or \
-                          get_nested_val(card_data_content, ['model_card', 'summary'])
-
-            if not description:
-                readme_text = card_data_content.get('text')
-                if isinstance(readme_text, str) and len(readme_text) > 0:
-                    summary_marker = readme_text.lower().find("## model summary")
-                    if summary_marker != -1:
-                        summary_text_after_marker = readme_text[summary_marker:]
-                        first_paragraph_after_marker = summary_text_after_marker.split('\n\n')[0]
-                        description = (first_paragraph_after_marker[:300] + '...') if len(first_paragraph_after_marker) > 300 else first_paragraph_after_marker
-                    else:
-                        description = (readme_text[:300] + '...') if len(readme_text) > 300 else readme_text
-
-    icon_url = None
-    if hasattr(model_info, 'authorData') and model_info.authorData and isinstance(model_info.authorData, dict) and model_info.authorData.get('avatarUrl'):
-        icon_url = model_info.authorData['avatarUrl']
-    elif creator:
-        icon_url = f"https://huggingface.co/{creator}/avatar_sm.jpeg"
-    # else:
-    #     icon_url = "/static/icons/default-model-icon.png"
-
-    data_dict = {
-        "id": model_info.id,
-        "name": name,
-        "creator": creator,
-        "description": description,
-        "iconUrl": icon_url,
-        "tags": model_info.tags or [],
-        "downloads": model_info.downloads if hasattr(model_info, 'downloads') else None,
-        "lastModified": model_info.lastModified if hasattr(model_info, 'lastModified') else None,
-    }
-
-    if is_detail:
-        data_dict["pipeline_tag"] = model_info.pipeline_tag
-        data_dict["cardData"] = card_data_content
-        data_dict["siblings"] = [sib.rfilename for sib in model_info.siblings] if model_info.siblings else []
-
-    return data_dict
-
-
-class HuggingFaceAPIService:
-    def __init__(self, token: Optional[str] = None):
-        self.hf_api = HfApi(token=token)
-
-    def list_models_from_hf(
-        self,
-        search: Optional[str] = None,
-        limit: int = 10,
-        sort: str = "downloads",
-        direction: str = "desc",
-        page: int = 1
-    ) -> Tuple[List[HFModelBasic], Optional[int]]:
-
-        hf_direction = -1 if direction == "desc" else 1
-
-        all_models_iterator = self.hf_api.list_models(
-            search=search,
-            sort=sort,
-            direction=hf_direction,
-            limit=limit * page if page > 0 else limit,
-            cardData=True,
-            full=False
+        model_infos_iterator = list_models(
+            search=search_term_for_api, # MODIFIED: direct search string
+            sort=sort_field,
+            direction=sort_direction,
+            limit=fetch_api_limit,
+            full=True,
+            cardData=False
         )
 
-        all_fetched_models_list = list(all_models_iterator)
+        all_models_fetched_from_api = list(model_infos_iterator)
 
-        start_index = (page - 1) * limit if page > 0 else 0
+        start_index = (page - 1) * limit
         end_index = start_index + limit
-        paginated_models_info = all_fetched_models_list[start_index:end_index]
+        models_for_current_page = all_models_fetched_from_api[start_index:end_index]
 
-        transformed_models = [HFModelBasic(**_transform_model_info(mi, is_detail=False)) for mi in paginated_models_info]
+        transformed_models = []
+        for model_info in models_for_current_page:
+            if isinstance(model_info, ModelInfo):
+                tags_list = model_info.tags if model_info.tags else []
+                processed_tags = [str(tag) for tag in tags_list if isinstance(tag, (str, int, float))]
 
-        total_items_estimation = None
-        if len(all_fetched_models_list) < (limit * page if page > 0 else limit):
-            total_items_estimation = len(all_fetched_models_list)
-        elif page == 1 and len(transformed_models) < limit:
-            total_items_estimation = len(transformed_models)
+                transformed_models.append({
+                    "id": model_info.modelId,
+                    "name": model_info.modelId,
+                    "creator": model_info.author,
+                    "private": model_info.private,
+                    "downloads": model_info.downloads,
+                    "likes": model_info.likes,
+                    "lastModified": model_info.lastModified.isoformat() if isinstance(model_info.lastModified, datetime.datetime) else str(model_info.lastModified),
+                    "tags": processed_tags,
+                    "description": model_info.pipeline_tag,
+                    "iconUrl": None
+                })
 
-        return transformed_models, total_items_estimation
+        # The 'total' field in the response.
+        # Based on the prompt: "total: int (Reflecting the count of items in the current response, as per service)"
+        # However, previous service had: "total": len(all_models_fetched_from_api)
+        # The prompt for THIS step says: current_page_item_count = len(transformed_models)
+        # and then "total": current_page_item_count
+        # This means 'total' will be at most 'limit'. This is a change from the previous step's logic for 'total'.
+        # I will follow the prompt for *this specific subtask*.
+        current_page_item_count = len(transformed_models)
 
-    def get_model_details_from_hf(self, model_id: str, revision: Optional[str] = None) -> Optional[HFModelDetail]:
-        try:
-            model_info_obj: ModelInfo = self.hf_api.model_info(
-                repo_id=model_id,
-                revision=revision,
-                files_metadata=True
-            )
-            if not model_info_obj:
-                return None
+        return {
+            "items": transformed_models,
+            "total": current_page_item_count,
+            "page": page,
+            "limit": limit
+        }
+    except Exception as e:
+        print(f"Error in get_hf_models (direct search): {str(e)}")
+        # import traceback; traceback.print_exc();
+        raise HTTPException(status_code=500, detail=f"Error processing Hugging Face models: {str(e)}")
 
-            transformed_data = _transform_model_info(model_info_obj, is_detail=True)
-            return HFModelDetail(**transformed_data)
+async def download_hf_model(model_id: str) -> dict: # This function remains unchanged
+    download_dir = settings.MODEL_DOWNLOAD_DIRECTORY
+    try:
+        os.makedirs(download_dir, exist_ok=True)
+    except OSError as e:
+        print(f"Error creating directory {download_dir}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not create download directory: {str(e)}")
 
-        except Exception as e:
-            print(f"Error fetching detailed model info for {model_id}: {e}")
-            return None
+    simulated_file_path = os.path.join(download_dir, model_id.replace("/", "__"))
+    print(f"Simulating download of model {model_id} to {simulated_file_path}")
 
-# Example of how huggingface_service_instance might be created in hf_models.py or main.py:
-# from app.core.config import settings
-# huggingface_service_instance = HuggingFaceAPIService(token=settings.HF_TOKEN)
+    return {
+        "message": f"Download simulation for model {model_id} has been logged on the server.",
+        "model_id": model_id,
+        "download_path": simulated_file_path
+    }

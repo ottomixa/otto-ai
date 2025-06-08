@@ -1,37 +1,28 @@
-# Use an official Python runtime as a parent image
+# 1. Use an official Python base image
 FROM python:3.9-slim
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+# 2. Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Copy the backend's requirements file into the container
-# Adjusted path based on identified structure
-COPY ./hf_model_explorer_service/requirements.txt ./requirements.txt
+# 3. Set the working directory in the container
+WORKDIR /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 4. Copy requirements.txt and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend application code into a directory named 'app' inside the container
-# Source is ./hf_model_explorer_service/hf_model_explorer_service
-# Destination is ./app (relative to WORKDIR /usr/src/app)
-COPY ./hf_model_explorer_service/hf_model_explorer_service ./app
+# 5. Copy backend application code into the container
+COPY ./app /app/app
 
-# --- Add Frontend Assets (These paths remain correct if files are in project root) ---
-# Create the target directory for static frontend files
-RUN mkdir -p /usr/src/app/static_frontend/icons
+# 6. Copy frontend static files into a directory to be served
+# All frontend assets (index.html, script.js, style.css, icons/, favicon.ico)
+# are now expected to be in the ./static_frontend/ directory in the build context.
+COPY ./static_frontend /app/static_frontend/
 
-# Copy frontend files from the project root (where Dockerfile is) into the static directory
-COPY index.html /usr/src/app/static_frontend/
-COPY style.css /usr/src/app/static_frontend/
-COPY script.js /usr/src/app/static_frontend/
-COPY ./icons /usr/src/app/static_frontend/icons/
-# --- End Add Frontend Assets ---
-
-# Expose the port the app runs on
+# 7. Expose the port the app runs on
 EXPOSE 8000
 
-# Define the command to run the application
-# This CMD expects the FastAPI 'app' instance to be in 'app/main.py'
-# which aligns with where we copied hf_model_explorer_service/hf_model_explorer_service
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# 8. Define the command to run the application
+#    --host 0.0.0.0 makes it accessible from outside the container
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
