@@ -599,6 +599,20 @@ body, html {
     font-style: italic;
 }
 
+/* === Available Local Models Section Styles === */
+.sidebar-config-area .local-models-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #4a6278; /* Separator line, similar to ollama-config-section */
+}
+
+.sidebar-config-area .local-models-section h4 {
+    font-size: 1em;
+    color: #ecf0f1;
+    margin-bottom: 10px;
+}
+/* End Available Local Models Section Styles */
+
 /* === Ollama Configuration Section Styles === */
 .sidebar-config-area .ollama-config-section {
     margin-bottom: 20px; /* Space before the model selection section */

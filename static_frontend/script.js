@@ -23,6 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: closeConfigPanelBtnInside is not in the new HTML structure for sidebarConfigArea's header.
     // If it were, it would be: const closeConfigPanelBtnInside = document.getElementById('closeConfigPanelBtnInside');
 
+    // Get reference to modelSelectionSection's title text node
+    const modelSelectionSectionTitle = modelSelectionSection ? modelSelectionSection.querySelector('h4') : null;
+    const modelSelectionSectionTitleTextNode = (modelSelectionSectionTitle && modelSelectionSectionTitle.childNodes.length > 0 && modelSelectionSectionTitle.childNodes[0].nodeType === Node.TEXT_NODE) ? modelSelectionSectionTitle.childNodes[0] : null;
+
+    const activeModelSubLabel = document.getElementById('activeModelSubLabel'); // Added selector
+
+
     const backendBaseUrl = 'http://127.0.0.1:8000/api/v1';
 
     let selectedModel = null;
@@ -69,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- End Sidebar Functionality ---
 
+    let ollamaConnectionVerified = false; // Track if connection is verified
+
     // Create Ollama Configuration Section Dynamically
     const ollamaConfigSection = document.createElement('section');
     ollamaConfigSection.id = 'ollamaConfigSection';
@@ -114,6 +123,31 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarConfigArea.appendChild(ollamaConfigSection);
     }
     // End Create Ollama Configuration Section
+
+    // Create "Available local AI models" Section Dynamically
+    const availableLocalModelsSection = document.createElement('section');
+    availableLocalModelsSection.id = 'availableLocalModelsSection';
+    availableLocalModelsSection.classList.add('local-models-section');
+    availableLocalModelsSection.style.display = 'none'; // Initially hidden
+
+    const localModelsTitle = document.createElement('h4');
+    localModelsTitle.textContent = 'Available local AI models';
+    availableLocalModelsSection.appendChild(localModelsTitle);
+
+    const localModelListContainer = document.createElement('div');
+    localModelListContainer.id = 'localModelListContainer';
+    localModelListContainer.classList.add('model-list-container'); // Reuse existing class
+    availableLocalModelsSection.appendChild(localModelListContainer);
+
+    // Insert the new section: after ollamaConfigSection, before modelSelectionSection
+    if (sidebarConfigArea && ollamaConfigSection && modelSelectionSection) {
+        sidebarConfigArea.insertBefore(availableLocalModelsSection, modelSelectionSection);
+    } else if (sidebarConfigArea && ollamaConfigSection) {
+        ollamaConfigSection.insertAdjacentElement('afterend', availableLocalModelsSection);
+    } else if (sidebarConfigArea) {
+        sidebarConfigArea.appendChild(availableLocalModelsSection);
+    }
+    // End Create "Available local AI models" Section
 
     const MOCK_PROVIDER_DATA = { // Preserved from previous versions
         "llama2-7b-chat": [
@@ -205,6 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ollamaConnectionStatus.style.display = 'none';
             ollamaConnectionStatus.className = 'connection-status-message'; // Reset class
         }
+        // Reset model selection section title
+        if (modelSelectionSectionTitleTextNode) {
+            modelSelectionSectionTitleTextNode.nodeValue = 'Select AI Model ';
+        }
+        // Hide Available Local Models section and clear its list
+        if (availableLocalModelsSection) availableLocalModelsSection.style.display = 'none';
+        if (localModelListContainer) localModelListContainer.innerHTML = '';
+
         console.log('Config panel state FULLY reset.');
     }
 
@@ -229,6 +271,106 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text) { addMessage(text, 'user'); messageInput.value = ''; setTimeout(() => simulateAIResponse(text), 1000); }
     }
     function simulateAIResponse(userText) { addMessage(`Mock AI received: '${userText}'`, 'ai'); }
+
+    // Function to render local Ollama model cards (simplified display)
+    function renderLocalOllamaModelCards(models, container) {
+        if (!container) return;
+        container.innerHTML = ''; // Clear previous content
+
+        if (!models || models.length === 0) {
+            container.innerHTML = '<p class="info-message">No local Ollama models found. Pull models using Ollama CLI or ensure Ollama is running and accessible.</p>';
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        models.forEach(model => {
+            const card = document.createElement('div');
+            card.classList.add('model-card', 'local-model-card'); // Add specific class if needed for styling
+            card.dataset.modelName = model.name; // Store full name e.g. "mistral:latest"
+
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('model-card-info');
+
+            const nameH4 = document.createElement('h4');
+            nameH4.textContent = model.name;
+            infoDiv.appendChild(nameH4);
+
+            if (model.size) {
+                const sizeP = document.createElement('p');
+                sizeP.classList.add('model-meta');
+                sizeP.textContent = `Size: ${(model.size / 1e9).toFixed(2)} GB`;
+                infoDiv.appendChild(sizeP);
+            }
+            if (model.modified_at) {
+                const modifiedP = document.createElement('p');
+                modifiedP.classList.add('model-meta');
+                modifiedP.textContent = `Updated: ${new Date(model.modified_at).toLocaleDateString()}`;
+                infoDiv.appendChild(modifiedP);
+            }
+
+            // Add a simpler select button for local models (no provider selection needed)
+            const localSelectBtn = document.createElement('button');
+            localSelectBtn.classList.add('select-local-model-btn'); // New class for styling/selection
+            localSelectBtn.textContent = 'Use This Model';
+            localSelectBtn.dataset.modelId = model.name; // Use the full name as ID
+            infoDiv.appendChild(localSelectBtn);
+
+            card.appendChild(infoDiv);
+            fragment.appendChild(card);
+        });
+        container.appendChild(fragment);
+
+        // Add event listeners for these new select buttons
+        container.querySelectorAll('.select-local-model-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Deselect other cards (both HF and local)
+                document.querySelectorAll('.model-card.selected-model').forEach(c => c.classList.remove('selected-model'));
+                document.querySelectorAll('.local-model-card.selected-model').forEach(c => c.classList.remove('selected-model'));
+
+                button.closest('.local-model-card').classList.add('selected-model');
+                selectedModel = { id: button.dataset.modelId, name: button.dataset.modelId, isLocalOllama: true };
+
+                // Update UI to show this model is selected for Local Ollama
+                // The main activeConfigDisplay is updated by the "Apply Configuration" button.
+                // Here, we update the specific sub-label.
+                if (activeModelSubLabel) {
+                    activeModelSubLabel.textContent = `AI model: ${selectedModel.name}`;
+                }
+
+                // Also, update the title in the "Download new AI model" section to reflect this selection,
+                // as it might be confusing to see a different model name there.
+                if (selectedModelNameProviderTitle && modelSelectionSection.style.display === 'block' && selectedEngine === 'local_llama') {
+                     // This part is tricky: modelSelectionSection is for DOWNLOADABLE HF models.
+                     // If a local model is selected, we might want to clear or hide the HF model download section's context.
+                     // For now, let's just update the sub-label as per primary goal.
+                }
+                if (providerSelectionSection) providerSelectionSection.style.display = 'none';
+
+                console.log('Selected Local Ollama Model:', selectedModel);
+                // Potentially auto-apply or wait for main Apply button
+            });
+        });
+    }
+
+
+    // Function to fetch and render local Ollama models
+    async function fetchAndRenderLocalOllamaModels(ollamaUrl) {
+        if (!localModelListContainer) return;
+        localModelListContainer.innerHTML = '<p class="loading-message">Loading local models...</p>';
+        try {
+            const encodedOllamaUrl = encodeURIComponent(ollamaUrl);
+            const response = await fetch(`${backendBaseUrl}/ollama/local-models?ollama_url=${encodedOllamaUrl}`);
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({detail: "Failed to fetch local models."}));
+                throw new Error(errData.detail || `HTTP error ${response.status}`);
+            }
+            const data = await response.json(); // Expects { models: List[OllamaLocalModelInfo] }
+            renderLocalOllamaModelCards(data.models, localModelListContainer);
+        } catch (error) {
+            console.error('Error fetching or rendering local Ollama models:', error);
+            if (localModelListContainer) localModelListContainer.innerHTML = `<p class="error-message">Failed to load local models: ${error.message}</p>`;
+        }
+    }
 
     // Moved triggerDownload before renderModelCards and initializeModelSelection
     async function triggerDownload(modelId) {
@@ -259,15 +401,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderModelCards(modelsToRender) {
+    // Global-like variable within DOMContentLoaded to store names of locally available Ollama models
+    let localOllamaModelsSet = new Set();
+
+    async function renderModelCards(modelsToRender) { // Renamed from original renderModelCards to avoid confusion if old one is still there
         if (!modelListContainer) return;
 
+        if (selectedEngine === 'local_llama' && ollamaConnectionVerified) {
+            // Refresh local models set each time we render HF models for local_llama context
+            // This ensures the "Download" button status is up-to-date.
+            // Note: This makes renderModelCards async implicitly if it awaits.
+            // The call to renderModelCards from fetchModelsFromBackend().then() handles this.
+            const ollamaUrl = ollamaApiUrlInput.value.trim();
+            try {
+                const response = await fetch(`${backendBaseUrl}/ollama/local-models?ollama_url=${encodeURIComponent(ollamaUrl)}`);
+                if (response.ok) {
+                    const localData = await response.json();
+                    localOllamaModelsSet = new Set(localData.models.map(m => m.name));
+                } else {
+                    console.warn("Could not refresh local Ollama models list for button status update.");
+                    // Keep using the last known set, or clear it if preferred
+                    // localOllamaModelsSet.clear(); // Or handle error more visibly
+                }
+            } catch (e) {
+                console.warn("Error refreshing local Ollama models list:", e);
+                // localOllamaModelsSet.clear();
+            }
+        }
+
+
         if (!modelsToRender || modelsToRender.length === 0) {
-            // Assumes fetchModelsFromBackend handles messages for empty/error states
+            // Assumes fetchModelsFromBackend handles messages for empty/error states like "No models found"
+            // or "Loading models..." was already cleared by fetchModelsFromBackend if it found nothing.
             return;
         }
 
-        const fragment = document.createDocumentFragment(); // Create fragment
+        const fragment = document.createDocumentFragment();
 
         modelsToRender.forEach(model => {
             const card = document.createElement('div');
@@ -282,41 +451,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                 iconImg.alt = 'Icon not available';
             };
-            card.appendChild(iconImg); // Icon is a direct child of card
+            card.appendChild(iconImg);
 
             const infoDiv = document.createElement('div');
             infoDiv.classList.add('model-card-info');
 
             const nameH4 = document.createElement('h4');
             nameH4.textContent = model.name || model.id;
-            infoDiv.appendChild(nameH4); // Name is child of infoDiv
+            infoDiv.appendChild(nameH4);
 
-            // Buttons will now be children of infoDiv, after the name
             if (selectedEngine === 'local_llama') {
-                const downloadBtn = document.createElement('button');
-                downloadBtn.classList.add('download-model-btn');
-                downloadBtn.textContent = 'Download';
-                downloadBtn.dataset.modelId = model.id;
-
-                downloadBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    const modelIdToDownload = event.currentTarget.dataset.modelId;
-                    triggerDownload(modelIdToDownload);
+                const hfModelIdForCompare = model.id;
+                const isModelLocal = Array.from(localOllamaModelsSet).some(localName => {
+                    const localBaseName = localName.split(':')[0]; // e.g., "mistral" from "mistral:latest"
+                    return hfModelIdForCompare === localBaseName || hfModelIdForCompare === localName;
                 });
-                infoDiv.appendChild(downloadBtn); // Append Download button to infoDiv
+
+                if (!isModelLocal) { // If the HF model is NOT local, show Download to Ollama button
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.classList.add('download-model-btn');
+                    downloadBtn.textContent = 'Download to Ollama'; // Changed text
+                    downloadBtn.dataset.modelId = model.id;
+
+                    downloadBtn.addEventListener('click', async (event) => {
+                        event.stopPropagation();
+                        const modelIdToDownload = event.currentTarget.dataset.modelId;
+                        const ollamaUrl = ollamaApiUrlInput.value.trim();
+
+                        if (!ollamaUrl || !ollamaConnectionVerified) {
+                            if(ollamaConnectionStatus){
+                               ollamaConnectionStatus.textContent = 'Ollama API URL is not configured or connection not verified.';
+                               ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                               ollamaConnectionStatus.style.display = 'block';
+                            }
+                            return;
+                        }
+                        if(ollamaConnectionStatus){
+                           ollamaConnectionStatus.textContent = `Pulling '${modelIdToDownload}' into Ollama... This may take a while.`;
+                           ollamaConnectionStatus.className = 'connection-status-message'; // Neutral class
+                           ollamaConnectionStatus.style.display = 'block';
+                        }
+                        try {
+                            const response = await fetch(`${backendBaseUrl}/ollama/pull-model`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ model_name: modelIdToDownload, ollama_url: ollamaUrl })
+                            });
+                            const result = await response.json();
+                            if(ollamaConnectionStatus){
+                               ollamaConnectionStatus.textContent = result.message;
+                               ollamaConnectionStatus.className = response.ok && result.status && result.status.startsWith('success') ?
+                                   'connection-status-message status-success' :
+                                   'connection-status-message status-failure';
+                               ollamaConnectionStatus.style.display = 'block';
+                            }
+                            if (response.ok && result.status && result.status.startsWith('success')) {
+                                // Refresh both local model list and this HF list's button states
+                                if(ollamaConnectionVerified) await fetchAndRenderLocalOllamaModels(ollamaUrl);
+
+                                // Re-fetch and render HF models to update button states
+                                const currentSearchTerm = modelSearchInput ? modelSearchInput.value.trim() : '';
+                                const hfModels = await fetchModelsFromBackend({ searchTerm: currentSearchTerm, limit: 10 }); // Adjust limit as needed
+                                await renderModelCards(hfModels); // Re-render this HF list
+                            }
+                        } catch (error) {
+                            console.error('Error pulling Ollama model:', error);
+                            if(ollamaConnectionStatus){
+                               ollamaConnectionStatus.textContent = 'Client error during model pull operation.';
+                               ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                               ollamaConnectionStatus.style.display = 'block';
+                            }
+                        }
+                    });
+                    infoDiv.appendChild(downloadBtn);
+                }
+                // No "Select" button for HF models when Local Ollama engine is active.
+            } else { // For cloud providers or other engines
+                const selectBtn = document.createElement('button');
+                selectBtn.classList.add('select-model-btn');
+                selectBtn.textContent = 'Select';
+                // selectBtn.disabled = false; // Default state
+                infoDiv.appendChild(selectBtn);
             }
 
-            const selectBtn = document.createElement('button');
-            selectBtn.classList.add('select-model-btn');
-            selectBtn.textContent = 'Select';
-            infoDiv.appendChild(selectBtn); // Append Select button to infoDiv
-
-            card.appendChild(infoDiv); // Append infoDiv (containing name and buttons) to card
-
-            fragment.appendChild(card); // Append card to fragment
+            card.appendChild(infoDiv);
+            fragment.appendChild(card);
         });
 
-        // After loop, update DOM once
         modelListContainer.innerHTML = '';
         modelListContainer.appendChild(fragment);
 
@@ -441,23 +662,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (selectedEngine === 'local_llama') {
                         if(modelSearchInput) modelSearchInput.placeholder = "Search Hugging Face models to download...";
-                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'block'; // Show Ollama config
-                        // Model selection for local_llama will be from HF, so show that section too
+                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'block';
+                        if (availableLocalModelsSection) availableLocalModelsSection.style.display = 'block';
                         if (modelSelectionSection) modelSelectionSection.style.display = 'block';
+                        if (modelSelectionSectionTitleTextNode) {
+                            modelSelectionSectionTitleTextNode.nodeValue = 'Download new AI Model ';
+                        }
+                        if (ollamaConnectionVerified) { // Only fetch if connection is good
+                            fetchAndRenderLocalOllamaModels(ollamaApiUrlInput.value.trim());
+                        } else {
+                             if(localModelListContainer) localModelListContainer.innerHTML = '<p class="info-message">Test Ollama connection to see local models.</p>';
+                        }
                         fetchModelsFromBackend({}).then(models => { renderModelCards(models); });
                     } else if (selectedEngine.startsWith('cloud_provider_')) {
                         if(modelSearchInput) modelSearchInput.placeholder = "Search Hugging Face models...";
-                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'none'; // Hide Ollama config
+                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+                        if (availableLocalModelsSection) availableLocalModelsSection.style.display = 'none';
+                        if (localModelListContainer) localModelListContainer.innerHTML = '';
                         if (modelSelectionSection) modelSelectionSection.style.display = 'block';
+                        if (modelSelectionSectionTitleTextNode) {
+                            modelSelectionSectionTitleTextNode.nodeValue = 'Select AI Model ';
+                        }
                         fetchModelsFromBackend({}).then(models => { renderModelCards(models); });
                     } else {
-                        // For any other engine or if no engine is truly selected
                         if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+                        if (availableLocalModelsSection) availableLocalModelsSection.style.display = 'none';
+                        if (localModelListContainer) localModelListContainer.innerHTML = '';
                         if (modelSelectionSection) modelSelectionSection.style.display = 'none';
+                        if (modelSelectionSectionTitleTextNode) {
+                            modelSelectionSectionTitleTextNode.nodeValue = 'Select AI Model ';
+                        }
                     }
-                } else { // If no radio button is checked (e.g. after reset)
+                } else {
                     if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+                    if (availableLocalModelsSection) availableLocalModelsSection.style.display = 'none';
+                    if (localModelListContainer) localModelListContainer.innerHTML = '';
                     if (modelSelectionSection) modelSelectionSection.style.display = 'none';
+                    if (modelSelectionSectionTitleTextNode) {
+                        modelSelectionSectionTitleTextNode.nodeValue = 'Select AI Model ';
+                    }
                 }
                 console.log('Selected Engine:', selectedEngine);
             });
@@ -541,12 +784,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ollamaConnectionStatus.textContent = 'Ollama API URL cannot be empty.';
                 ollamaConnectionStatus.className = 'connection-status-message status-failure';
                 ollamaConnectionStatus.style.display = 'block';
+                ollamaConnectionVerified = false;
+                if(localModelListContainer) localModelListContainer.innerHTML = '<p class="info-message">Enter Ollama URL and test connection.</p>';
                 return;
             }
 
             ollamaConnectionStatus.textContent = 'Testing connection...';
             ollamaConnectionStatus.className = 'connection-status-message';
             ollamaConnectionStatus.style.display = 'block';
+            ollamaConnectionVerified = false; // Reset verification status
 
             try {
                 const response = await fetch(`${backendBaseUrl}/ollama/test-connection`, {
@@ -562,13 +808,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 ollamaConnectionStatus.textContent = result.message;
                 if (response.ok && result.status === 'success') {
                     ollamaConnectionStatus.className = 'connection-status-message status-success';
+                    ollamaConnectionVerified = true;
+                    fetchAndRenderLocalOllamaModels(ollamaUrl); // Fetch models on successful test
                 } else {
                     ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                    if(localModelListContainer) localModelListContainer.innerHTML = '<p class="info-message">Ollama connection failed. Check URL and ensure Ollama is running.</p>';
                 }
             } catch (error) {
                 console.error('Error testing Ollama connection:', error);
                 ollamaConnectionStatus.textContent = 'Client-side error: Could not reach backend or parse response.';
                 ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                if(localModelListContainer) localModelListContainer.innerHTML = '<p class="info-message">Ollama connection failed. Check URL and ensure Ollama is running.</p>';
             }
             ollamaConnectionStatus.style.display = 'block';
         });
