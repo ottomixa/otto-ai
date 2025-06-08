@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ollamaApiUrlInput.type = 'text';
     ollamaApiUrlInput.id = 'ollamaApiUrlInput';
     ollamaApiUrlInput.classList.add('text-input');
-    ollamaApiUrlInput.value = 'http://localhost:11434'; // Default value
+    ollamaApiUrlInput.value = 'http://host.docker.internal:11434'; // Ensure this is the value
     formGroupUrl.appendChild(ollamaApiUrlInput);
     ollamaConfigSection.appendChild(formGroupUrl);
 
