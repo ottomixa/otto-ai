@@ -69,6 +69,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- End Sidebar Functionality ---
 
+    // Create Ollama Configuration Section Dynamically
+    const ollamaConfigSection = document.createElement('section');
+    ollamaConfigSection.id = 'ollamaConfigSection';
+    ollamaConfigSection.classList.add('ollama-config-section'); // For styling
+    ollamaConfigSection.style.display = 'none'; // Initially hidden
+
+    const ollamaConfigTitle = document.createElement('h4');
+    ollamaConfigTitle.textContent = 'Ollama Configuration';
+    ollamaConfigSection.appendChild(ollamaConfigTitle);
+
+    const formGroupUrl = document.createElement('div');
+    formGroupUrl.classList.add('form-group');
+
+    const ollamaApiUrlLabel = document.createElement('label');
+    ollamaApiUrlLabel.setAttribute('for', 'ollamaApiUrlInput');
+    ollamaApiUrlLabel.textContent = 'Ollama API URL:';
+    formGroupUrl.appendChild(ollamaApiUrlLabel);
+
+    const ollamaApiUrlInput = document.createElement('input');
+    ollamaApiUrlInput.type = 'text';
+    ollamaApiUrlInput.id = 'ollamaApiUrlInput';
+    ollamaApiUrlInput.classList.add('text-input');
+    ollamaApiUrlInput.value = 'http://localhost:11434'; // Default value
+    formGroupUrl.appendChild(ollamaApiUrlInput);
+    ollamaConfigSection.appendChild(formGroupUrl);
+
+    const testOllamaConnectionBtn = document.createElement('button');
+    testOllamaConnectionBtn.id = 'testOllamaConnectionBtn';
+    testOllamaConnectionBtn.classList.add('sidebar-button', 'test-connection-btn');
+    testOllamaConnectionBtn.textContent = 'Test Connection';
+    ollamaConfigSection.appendChild(testOllamaConnectionBtn);
+
+    const ollamaConnectionStatus = document.createElement('div');
+    ollamaConnectionStatus.id = 'ollamaConnectionStatus';
+    ollamaConnectionStatus.classList.add('connection-status-message');
+    ollamaConnectionStatus.style.display = 'none'; // Initially hidden
+    ollamaConfigSection.appendChild(ollamaConnectionStatus);
+
+    // Insert the new section before modelSelectionSection within sidebarConfigArea
+    if (sidebarConfigArea && modelSelectionSection) {
+        sidebarConfigArea.insertBefore(ollamaConfigSection, modelSelectionSection);
+    } else if (sidebarConfigArea) { // Fallback if modelSelectionSection somehow not found
+        sidebarConfigArea.appendChild(ollamaConfigSection);
+    }
+    // End Create Ollama Configuration Section
+
     const MOCK_PROVIDER_DATA = { // Preserved from previous versions
         "llama2-7b-chat": [
             {"providerId": "replicate", "providerName": "Replicate", "providerIconUrl": "icons/replicate-logo.png", "notes": "Fast cold starts.", "tiers": [{"tierId": "replicate-t4", "tierName": "Standard (NVIDIA T4)", "tierIconClass": "fas fa-gpu", "specs": "NVIDIA T4 GPU", "pricePrediction": "Est. $0.0015 / 1k tokens", "priceDetails": { "per1kTokens": 0.0015, "unit": "1k tokens"}}]},
@@ -151,6 +197,14 @@ document.addEventListener('DOMContentLoaded', () => {
             modelSearchInput.placeholder = "Search models..."; // Reset placeholder
         }
         if (modelListContainer) modelListContainer.innerHTML = '';
+
+        // Also hide Ollama section and clear its status
+        if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+        if (ollamaConnectionStatus) {
+            ollamaConnectionStatus.textContent = '';
+            ollamaConnectionStatus.style.display = 'none';
+            ollamaConnectionStatus.className = 'connection-status-message'; // Reset class
+        }
         console.log('Config panel state FULLY reset.');
     }
 
@@ -385,10 +439,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(modelListContainer) modelListContainer.innerHTML = '';
                     document.querySelectorAll('.model-card.selected-model').forEach(c => c.classList.remove('selected-model'));
 
-                    if (selectedEngine === 'local_llama' || selectedEngine.startsWith('cloud_provider_')) {
-                        if(modelSearchInput) modelSearchInput.placeholder = selectedEngine === 'local_llama' ? "Search Hugging Face models to download..." : "Search Hugging Face models...";
+                    if (selectedEngine === 'local_llama') {
+                        if(modelSearchInput) modelSearchInput.placeholder = "Search Hugging Face models to download...";
+                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'block'; // Show Ollama config
+                        // Model selection for local_llama will be from HF, so show that section too
+                        if (modelSelectionSection) modelSelectionSection.style.display = 'block';
                         fetchModelsFromBackend({}).then(models => { renderModelCards(models); });
+                    } else if (selectedEngine.startsWith('cloud_provider_')) {
+                        if(modelSearchInput) modelSearchInput.placeholder = "Search Hugging Face models...";
+                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'none'; // Hide Ollama config
+                        if (modelSelectionSection) modelSelectionSection.style.display = 'block';
+                        fetchModelsFromBackend({}).then(models => { renderModelCards(models); });
+                    } else {
+                        // For any other engine or if no engine is truly selected
+                        if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+                        if (modelSelectionSection) modelSelectionSection.style.display = 'none';
                     }
+                } else { // If no radio button is checked (e.g. after reset)
+                    if (ollamaConfigSection) ollamaConfigSection.style.display = 'none';
+                    if (modelSelectionSection) modelSelectionSection.style.display = 'none';
                 }
                 console.log('Selected Engine:', selectedEngine);
             });
@@ -463,6 +532,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial fetch for default view (e.g., when settings panel is opened without engine pre-selection)
     // This part might be removed if an engine must always be selected first to show models.
     // fetchModelsFromBackend({}).then(models => renderModelCards(models));
+
+    // Event listener for Test Ollama Connection button
+    if (testOllamaConnectionBtn) {
+        testOllamaConnectionBtn.addEventListener('click', async () => {
+            const ollamaUrl = ollamaApiUrlInput.value.trim();
+            if (!ollamaUrl) {
+                ollamaConnectionStatus.textContent = 'Ollama API URL cannot be empty.';
+                ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                ollamaConnectionStatus.style.display = 'block';
+                return;
+            }
+
+            ollamaConnectionStatus.textContent = 'Testing connection...';
+            ollamaConnectionStatus.className = 'connection-status-message';
+            ollamaConnectionStatus.style.display = 'block';
+
+            try {
+                const response = await fetch(`${backendBaseUrl}/ollama/test-connection`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: ollamaUrl }),
+                });
+
+                const result = await response.json();
+
+                ollamaConnectionStatus.textContent = result.message;
+                if (response.ok && result.status === 'success') {
+                    ollamaConnectionStatus.className = 'connection-status-message status-success';
+                } else {
+                    ollamaConnectionStatus.className = 'connection-status-message status-failure';
+                }
+            } catch (error) {
+                console.error('Error testing Ollama connection:', error);
+                ollamaConnectionStatus.textContent = 'Client-side error: Could not reach backend or parse response.';
+                ollamaConnectionStatus.className = 'connection-status-message status-failure';
+            }
+            ollamaConnectionStatus.style.display = 'block';
+        });
+    }
 });
 
 // Note: triggerDownload function moved up within DOMContentLoaded

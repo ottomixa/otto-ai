@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles # Added for serving static files
-from fastapi.middleware.cors import CORSMiddleware # To allow frontend requests
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import hf_models as hf_models_router
-from app.core.config import settings # To access settings if needed globally, or for static files
+from app.api.endpoints import ollama as ollama_router # Added Ollama router import
+from app.core.config import settings
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -27,6 +28,13 @@ app.include_router(
     hf_models_router.router,
     prefix="/api/v1/hf-models",
     tags=["Hugging Face Models"]
+)
+
+# Include the Ollama router
+app.include_router(
+    ollama_router.router,
+    prefix="/api/v1/ollama", # Standardized API prefix
+    tags=["Ollama Management"]
 )
 
 # Serve static frontend files (HTML, CSS, JS, Icons)

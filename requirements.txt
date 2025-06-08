@@ -4,3 +4,4 @@ requests
 pydantic-settings
 python-dotenv
 huggingface-hub
+httpx
